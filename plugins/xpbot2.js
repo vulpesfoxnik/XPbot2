@@ -3,7 +3,7 @@ var channel;
 var jsonfile = require('jsonfile');
 var redis = require("redis");
 var client = redis.createClient(6379, "127.0.0.1");
-
+const User = require('../model/user');
 var titles = require('./etc/titles.js');
 var items = require('./etc/items.js');
 var configuration = require('./etc/config.js');
@@ -65,86 +65,80 @@ module.exports = function (parent, chanName) {
 	//****************************
 	//Admin only commands
 	//****************************
-	
-	cmdHandler.ban = function (args, data) {
-		if (fChatLibInstance.isUserChatOP(channel, data.character)) {
-			client.hgetall(args, function (err, result) {
-				if (result != null) {
-					result.banned = true;
-					client.hmset(args, result);
-					fChatLibInstance.sendPrivMessage(data.character, "Character " + args + " has been banned.");
-				} else {
-					fChatLibInstance.sendPrivMessage(data.character, "Character " + args + " wasn't found.");
-				}
-			});
-		} else {
-			fChatLibInstance.sendPrivMessage(data.character, "You are not an admin.");
+
+  cmdHandler.ban = adminOnly(function (args, data) {
+    const user = new User(args);
+    const reply = respondPrivate(data.character);
+    user.populate().then(
+      (user) => user.ban(true).then(
+        (user) => reply(`${user.userCode} has been banished from the realm master!`)
+        , () => reply(`I failed! ${user.userCode} could not be banished!`)
+      )
+      , () => {
+        reply(`Master, ${user.userCode} couldn't be found.`);
+      }
+    );
+  });
+
+  cmdHandler.unban = adminOnly(function (args, data) {
+    const user = new User(args);
+    const reply = respondPrivate(data.character);
+    user.populate().then(
+      (user) => user.ban(false).then(
+        (user) => reply(`${user.userCode} is now welcome, master, by your wisdom!`)
+        , () => reply(`I failed! ${user.userCode} could not be readmitted, master!`)
+      )
+      , () => {
+        reply(`Master, ${user.userCode} couldn't be found.`);
+      }
+    );
+  });
+
+	cmdHandler.giveXP(adminOnly(function (args, data){
+    const reply = respondPrivate(data.character);
+    const parsing = args.match(/!giveXP +(-?\d+) +"([^"]+)"/);
+    if (!parsing) {
+    	reply(`I'm sorry master, I did not understand your request. Please phrase it this way:
+    	  To give XP, say:
+    		!giveXP 50 "User Name"
+    		To take away XP, say:
+    		!giveXP -50 "User Name"
+    	`);
+    	return;
 		}
-	}
-	
-	cmdHandler.unban = function (args, data) {
-		if (fChatLibInstance.isUserChatOP(channel, data.character)) {
-			client.hgetall(args, function (err, result) {
-				if (result != null) {
-					result.banned = "FALSE";
-					client.hmset(args, result);
-					fChatLibInstance.sendPrivMessage(data.character, "Character " + args + " has been unbanned.");
-				} else {
-					fChatLibInstance.sendPrivMessage(data.character, "Character " + args + " wasn't found.");
-				}
-			});
-		} else {
-			fChatLibInstance.sendPrivMessage(data.character, "You are not an admin.");
-		}
-	}
-			//you can use negative amounts to take XP
-	cmdHandler.giveXP = function (args, data) {
-		if (fChatLibInstance.isUserChatOP(channel, data.character)) {
-			var arr = args.split(' ');
-			var result = arr.splice(0, 1);
-			result.push(arr.join(' ')); 
-			client.hgetall(result[1], function (err, chara) {
-				if (chara != null) {
-					if (!isNaN(parseInt(result[0]))) {
-						chara.XP = (parseInt(result[0]) + parseInt(chara.XP));
-						client.hmset(result[1], chara);
-						fChatLibInstance.sendPrivMessage(data.character, result[0] + " XP has been given to " + result[1] + ".");
-						fChatLibInstance.sendPrivMessage(result[1], data.character + " has given you " + result[0] + " XP.");
-					} else {
-						fChatLibInstance.sendPrivMessage(data.character, "XP ammount should be a number.");
-					}
-				} else {
-					fChatLibInstance.sendPrivMessage(data.character, "Character " + result[1] + " wasn't found.");
-				}
-			});
-		} else {
-			fChatLibInstance.sendPrivMessage(data.character, "You are not an admin.");
-		}
-	}
-			//You can use negative amounts to take gold.
-	cmdHandler.giveGold = function (args, data) {
-		if (fChatLibInstance.isUserChatOP(channel, data.character)) {
-			var arr = args.split(' ');
-			var result = arr.splice(0, 1);
-			result.push(arr.join(' ')); 
-			client.hgetall(result[1], function (err, chara) {
-				if (chara != null) {
-					if (!isNaN(parseInt(result[0]))) {
-						chara.Gold = (parseInt(result[0]) + parseInt(chara.Gold));
-						client.hmset(result[1], chara);
-						fChatLibInstance.sendPrivMessage(data.character, result[0] + " Gold has been given to " + result[1] + ".");
-						fChatLibInstance.sendPrivMessage(result[1], data.character + " has given you " + result[0] + " Gold.");
-					} else {
-						fChatLibInstance.sendPrivMessage(data.character, "Gold ammount should be a number.");
-					}
-				} else {
-					fChatLibInstance.sendPrivMessage(data.character, "Character " + result[1] + " wasn't found.");
-				}
-			});
-		} else {
-			fChatLibInstance.sendPrivMessage(data.character, "You are not an admin.");
-		}
-	}
+		const amount = Number(parsing[0]);
+    const user = new User(sanitizeName(parsing[1]));
+			user.exists().then(
+    	(user)=>user.addExp(amount).then(
+    		(user)=>reply(`Master, I have rewarded ${amount} XP to ${user.userCode}'s records.`)
+				, ()=>reply(`Master, I was [b]unable[/b] to reward ${amount} XP to ${user.userCode}.`)
+			)
+			, ()=>reply(`Master, ${user.userCode} does not exist!`)
+		);
+  }));
+
+	cmdHandler.giveGold = adminOnly(function (args, data) {
+    const reply = respondPrivate(data.character);
+    const parsing = args.match(/!giveXP +(-?\d+) +"([^"]+)"/);
+    if (!parsing) {
+      reply(`I'm sorry master, I did not understand your request. Please phrase it this way:
+    	  To give XP, say:
+    		!giveGold 50 "User Name"
+    		To take away XP, say:
+    		!giveGold -50 "User Name"
+    	`);
+      return;
+    }
+    const amount = Number(parsing[0]);
+    const user = new User(sanitizeName(parsing[1]));
+    user.exists().then(
+      (user)=>user.addGold(amount).then(
+        (user)=>reply(`Master, I have deposited ${amount} gold to ${user.userCode}'s account.`)
+        , ()=>reply(`Master, I was [b]unable[/b] to deposit ${amount} gold to ${user.userCode}'s account.`)
+      )
+      , ()=>reply(`Master, ${user.userCode} does not exist!`)
+    );
+  });
 	
 	cmdHandler.giveTitle = function (args, data) {
 		if (fChatLibInstance.isUserChatOP(channel, data.character)) {
