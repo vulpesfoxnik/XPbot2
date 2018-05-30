@@ -2,23 +2,28 @@ const {promisify} = require('util');
 const redis = require("redis");
 const client = redis.createClient(6379, "127.0.0.1");
 
-
+const expKey = 'XP', goldKey = 'Gold';
 
 class User {
   constructor(id) {
     this.id = id;
     this.instance = null;
   }
-  populate() {
+
+  populate(force) {
     return new Promise((resolve, reject)=>{
-      client.hgetall(this.id, (err, instance)=>{
-        if (instance != null) {
-          this.instance = instance;
-          resolve(this);
-        } else {
-          reject(err);
-        }
-      });
+      if (!force || this.instance) {
+        resolve(this);
+      } else {
+        client.hgetall(this.id, (err, instance)=>{
+          if (instance != null) {
+            this.instance = instance;
+            resolve(this);
+          } else {
+            reject(err);
+          }
+        });
+      }
     })
   };
 
@@ -75,36 +80,51 @@ class User {
     });
   }
 
-  /**
-   * @param {Title} title
-   */
-  giveTitle(title) {
-    return this.populate().then(()=>{
-      const titles = new Set(this.instance.titles)
+
+
+  addExp(amount) {
+    return new Promise((resolve, reject)=>{
+      client.hmget(this.id, expKey, (err, exp)=>{
+        const newValue = Number(exp) + Number(amount);
+        if (isNaN(newValue)) {
+          reject({NaN:true});
+        } else {
+          resolve(this.setExp(Math.min(newValue, 0)));
+        }
+      });
     });
   }
 
-  giveItem(item) {
-
+  setExp(amount) {
+    return new Promise((resolve, reject)=>{
+      client.hmset(this.id, expKey, amount, (err)=>{
+        if (err) {
+          reject(err);
+        } else {
+          resolve(this);
+        }
+      });
+    });
   }
 
-  giveExp() {
-
-  }
-  giveGold() {
-
-  }
-
-  giveTitle(title) {
-
-  }
-  takeTitle(title) {
-
+  addGold(amount) {
+    amount = Number(amount);
+    return isNaN(amount) ? Promise.reject({NaN:true}):new Promise((resolve)=>{
+      client.hmget(this.id, goldKey, (err, exp)=>{
+          resolve(this.setExp(Math.max(exp + amount, 0)));
+      });
+    });
   }
 
-  snapshot() {
-
+  setGold(amount) {
+    return new Promise((resolve, reject)=>{
+      client.hmset(this.id, goldKey, amount, (err)=>{
+        if (err) {
+          reject(err);
+        } else {
+          resolve(this);
+        }
+      });
+    });
   }
-
-  delete(){}
 }
