@@ -271,28 +271,32 @@ module.exports = function (parent, chanName) {
 			`);
 			return;
 		}
-		const fromChara = sanitizeName(parse[1])
-			, toChara = sanitizeName(parse[2]);
-    client.hgetall(fromChara, function (err, fromInstance) {
-      if (fromInstance != null) {
-      	const newData = Object.assign({}, fromInstance, {identifier: toChara});
-      	client.hmset(toChara, newData);
-				reply(`Yes master. I Transferred all attributes from ${userBBC(fromChara)} to ${userBBC(toChara)}[/user].
+		const existingUser = new User(sanitizeName(parse[1]));
+    existingUser.exists().then(() => {
+      const newUser = new User(sanitizeName(parse[2]));
+      return existingUser.copyTo(newUser).then(
+        () => {
+          reply(`Yes master. I Transferred all attributes from ${existingUser.userCode} to ${newUser.userCode}[/user].
 For your records, this is what I copied:
-${viewObject(newData)}
-
+${viewObject(newUser.instance)}
 If you want me to delete the old user, please type:
-  !deleteCharacter "${fromChara}"
+  !deleteCharacter "${existingUser.id}"
 `
-				);
-      } else {
-        reply(`I'm sorry master, the user you were looking for, ${userBBC(fromChara)}, was not found.`);
+          );
+        }
+        , ()=> {
+          reply(`I'm sorry master, something has prevented me from copying to ${newUser.userCode}.`);
+        }
+        );
       }
-    });
+      , () => {
+        reply(`I'm sorry master, the user you were looking for, ${existingUser.userCode}, was not found.`);
+      }
+    );
 	});
 
-	cmdHandler.deleteCharacter = adminOnly((args, messenger)=>{
-		const reply = respondPrivate(messenger.character);
+  cmdHandler.deleteCharacter = adminOnly((args, messenger) => {
+    const reply = respondPrivate(messenger.character);
     const parse = args.match(/!deleteCharacter +"([^"]+)"/);
     if (!parse) {
       reply(`I'm sorry master, I did not understand. Please phase your request this way:
@@ -300,21 +304,21 @@ If you want me to delete the old user, please type:
 			`);
       return;
     }
-    const chara = sanitizeName(parse[1]);
-    client.hexists(chara, (error, exists)=>{
-    	if (exists) {
-    		client.del(chara, (error, response)=>{
-    			if (error) {
-    				reply(`Master, I am a teapot. I'm sorry, something went wrong.`);
-					} else {
-    				reply(`Master, I have wiped ${userBBC(chara)} from my memory!`);
-					}
-				});
-			} else {
-    		reply(`I'm sorry master, I could not find ${userBBC(chara)}. Perhaps they were already erased?`);
-			}
-		})
-	});
+    const chara = new User(sanitizeName(parse[1]));
+    chara.exists().then(
+      () => chara.erase().then(
+        () => {
+          reply(`Master, I have wiped ${chara.userCode} from my memory!`);
+          }
+        , () => {
+          reply(`Master, I am a teapot. I'm sorry, something went wrong. I was unable to delete ${chara.userCode}`);
+        }
+      )
+      , () => {
+        reply(`I'm sorry master, I could not find ${chara.userCode}. Perhaps they were already erased?`);
+      }
+    );
+  });
 
 	/* cmdHandler.toggleXPtrade = function (args, data) {
 		if (fChatLibInstance.isUserChatOP(channel, data.character)) {

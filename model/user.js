@@ -27,13 +27,27 @@ class User {
     })
   };
 
-  copyTo(user) {
-    return user.populate().then((user)=>new Promise((resolve)=>{
-      const newData = Object.assign({}, user.instance, {identifier: this.id});
-      client.hmset(this.id, newData, (err, resp)=>{
-        this.populate().finally(()=>resolve(this));
-      });
-    }));
+  store() {
+    return new Promise((resolve, reject)=>{
+      if (this.instance) {
+        client.hmset(this.id, this.instance, (err, resp)=>{
+          if (err) {
+            reject(err);
+          } else {
+            resolve(this);
+          }
+        });
+      } else {
+        reject({null:true});
+      }
+    });
+  }
+
+  copyTo(targetUser) {
+    return this.populate(true).then(()=>{
+      targetUser.instance = Object.assign({}, targetUser.instance, {identifier: this.id});
+      return targetUser.store();
+    });
   }
 
   exists() {
@@ -126,5 +140,25 @@ class User {
         }
       });
     });
+  }
+
+
+  reset() {
+    return new Promise((resolve, reject)=>{
+      client.hmset(
+        this.id
+        , {
+          character: this.id, banned: "FALSE", XP: 0, Gold: 0, title: 0
+          , titleList: "0", wornItems: "0", ownedItems: "0,4", notices: "FALSE"
+        }
+        , (err)=> {
+          if (err) {
+            reject(err);
+          } else {
+            resolve(this);
+          }
+        }
+      );
+    })
   }
 }
