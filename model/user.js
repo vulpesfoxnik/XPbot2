@@ -2,7 +2,14 @@ const {promisify} = require('util');
 const redis = require("redis");
 const client = redis.createClient(6379, "127.0.0.1");
 
-const expKey = 'XP', goldKey = 'Gold';
+const expKey = 'XP'
+  , goldKey = 'Gold'
+  , currentTitle = 'title'
+  , titlesKey = 'titleList'
+  , itemsKey = 'items'
+  , equippedKey = 'wornItems'
+  , inventoryKey = 'ownedItems'
+  , noticeKey = 'notices';
 
 class User {
   constructor(id) {
@@ -84,7 +91,7 @@ class User {
 
   ban(boolean) {
     return new Promise((resolve, reject)=>{
-      client.hmset(this.id,{identifier: this.id, banned: Boolean(boolean)}, (err, resp)=>{
+      client.hmset(this.id,{identifier: this.id, banned: String(Boolean(boolean)).toUpperCase()}, (err, resp)=>{
         if (err) {
           reject(err);
         } else {
@@ -162,3 +169,5 @@ class User {
     })
   }
 }
+
+module.exports = User;
