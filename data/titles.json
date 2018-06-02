@@ -3,246 +3,287 @@
     "id": 0,
     "title": "Citizen",
     "XP": 0,
-    "Gold": 0
+    "Gold": 0,
+    "hidden": true
   },
   {
     "id": 1,
     "title": "Master",
     "XP": 5000,
-    "Gold": 5000
+    "Gold": 5000,
+    "hidden": false
   },
   {
     "id": 2,
     "title": "Mistress",
     "XP": 5000,
-    "Gold": 5000
+    "Gold": 5000,
+    "hidden": false
   },
   {
     "id": 3,
     "title": "Catgirl",
     "XP": 500,
-    "Gold": 2500
+    "Gold": 2500,
+    "hidden": false
   },
   {
     "id": 4,
     "title": "Slave",
     "XP": 0,
-    "Gold": 0
+    "Gold": 0,
+    "hidden": false
   },
   {
     "id": 5,
     "title": "Warrior",
     "XP": 10000,
-    "Gold": 0
+    "Gold": 0,
+    "hidden": false
   },
   {
     "id": 6,
     "title": "King",
     "XP": 10000,
-    "Gold": 100000
+    "Gold": 100000,
+    "hidden": false
   },
   {
     "id": 7,
     "title": "Queen",
     "XP": 10000,
-    "Gold": 100000
+    "Gold": 100000,
+    "hidden": false
   },
   {
     "id": 8,
     "title": "Lawyer",
     "XP": 100,
-    "Gold": 1000
+    "Gold": 1000,
+    "hidden": false
   },
   {
     "id": 9,
     "title": "Toy",
     "XP": 900,
-    "Gold": 0
+    "Gold": 0,
+    "hidden": false
   },
   {
     "id": 10,
     "title": "God",
     "XP": 900000,
-    "Gold": 9000
+    "Gold": 9000,
+    "hidden": false
   },
   {
     "id": 11,
     "title": "Goddess",
     "XP": 900001,
-    "Gold": 9001
+    "Gold": 9001,
+    "hidden": false
   },
   {
     "id": 12,
     "title": "CumDumpster",
     "XP": 1000,
-    "Gold": 0
+    "Gold": 0,
+    "hidden": false
   },
   {
     "id": 13,
     "title": "Exquisite",
     "XP": 15000,
-    "Gold": 5000
+    "Gold": 5000,
+    "hidden": false
   },
   {
     "id": 14,
     "title": "Pet",
     "XP": 100,
-    "Gold": 90
+    "Gold": 90,
+    "hidden": false
   },
   {
     "id": 15,
     "title": "Voyeur",
     "XP": 15,
-    "Gold": 5
+    "Gold": 5,
+    "hidden": false
   },
   {
     "id": 16,
     "title": "Frequent_Masturbator",
     "XP": 500,
-    "Gold": 50
+    "Gold": 50,
+    "hidden": false
   },
   {
     "id": 17,
     "title": "Switch",
     "XP": 2000,
-    "Gold": 1000
+    "Gold": 1000,
+    "hidden": false
   },
   {
     "id": 18,
     "title": "Lustful",
     "XP": 4000,
-    "Gold": 0
+    "Gold": 0,
+    "hidden": false
   },
   {
     "id": 19,
     "title": "Wrath",
     "XP": 3000,
-    "Gold": 0
+    "Gold": 0,
+    "hidden": false
   },
   {
     "id": 20,
     "title": "Bartender",
     "XP": 1900,
-    "Gold": 1000
+    "Gold": 1000,
+    "hidden": false
   },
   {
     "id": 21,
     "title": "Butler",
     "XP": 2500,
-    "Gold": 1000
+    "Gold": 1000,
+    "hidden": false
   },
   {
     "id": 22,
     "title": "Dancer",
     "XP": 1300,
-    "Gold": 500
+    "Gold": 500,
+    "hidden": false
   },
   {
     "id": 23,
     "title": "Entertainer",
     "XP": 2200,
-    "Gold": 2000
+    "Gold": 2000,
+    "hidden": false
   },
   {
     "id": 24,
     "title": "Pretty_Princess",
     "XP": 19000,
-    "Gold": 19000
+    "Gold": 19000,
+    "hidden": false
   },
   {
     "id": 25,
     "title": "Scientist",
     "XP": 1123,
-    "Gold": 5813
+    "Gold": 5813,
+    "hidden": false
   },
   {
     "id": 26,
     "title": "Engineer",
     "XP": 4000,
-    "Gold": 3000
+    "Gold": 3000,
+    "hidden": false
   },
   {
     "id": 27,
     "title": "Thief",
     "XP": 9000,
-    "Gold": 1000
+    "Gold": 1000,
+    "hidden": false
   },
   {
     "id": 28,
     "title": "Alchemist",
     "XP": 2326,
-    "Gold": 1247
+    "Gold": 1247,
+    "hidden": false
   },
   {
     "id": 29,
     "title": "Space_Explorer",
     "XP": 2161,
-    "Gold": 42
+    "Gold": 42,
+    "hidden": false
   },
   {
     "id": 30,
     "title": "Daemonologist",
     "XP": 1904,
-    "Gold": 72
+    "Gold": 72,
+    "hidden": false
   },
   {
     "id": 31,
     "title": "Auctioneer",
     "XP": 1091913,
-    "Gold": 1395918
+    "Gold": 1395918,
+    "hidden": false
   },
   {
     "id": 32,
     "title": "Magic_Scar_Fox",
     "XP": 99999999,
-    "Gold": 99999999
+    "Gold": 99999999,
+    "hidden": false
   },
   {
     "id": 33,
     "title": "The_Eiki",
     "XP": 99999999,
-    "Gold": 99999999
+    "Gold": 99999999,
+    "hidden": false
   },
   {
     "id": 34,
     "title": "Plushy",
     "XP": 200,
-    "Gold": 2000
+    "Gold": 2000,
+    "hidden": false
   },
   {
     "id": 35,
     "title": "Alpha_Sub",
     "XP": 20000,
-    "Gold": 2000
+    "Gold": 2000,
+    "hidden": false
   },
   {
     "id": 36,
     "title": "Beta_Sub",
     "XP": 2000,
-    "Gold": 200
+    "Gold": 200,
+    "hidden": false
   },
   {
     "id": 37,
     "title": "Breeder",
     "XP": 3689,
-    "Gold": 159
+    "Gold": 159,
+    "hidden": false
   },
   {
     "id": 38,
     "title": "Hucow",
     "XP": 8595,
-    "Gold": 90
+    "Gold": 90,
+    "hidden": false
   },
   {
     "id": 39,
     "title": "Master_of_Death",
     "XP": 12187,
-    "Gold": 5720
+    "Gold": 5720,
+    "hidden": false
   },
   {
     "id": 40,
     "title": "The_Frozen_King",
     "XP": 99999999,
-    "Gold": 99999999
+    "Gold": 99999999,
+    "hidden": false
   }
 ]
