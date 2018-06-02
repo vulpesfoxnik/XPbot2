@@ -499,24 +499,29 @@ If you want me to delete the old user, please type:
 	}
 	
 	cmdHandler.brag = function (args, data) {
-		client.hgetall(data.character, function (err, result) {
-			if (result != null) {
-				if (result.banned == "FALSE") {
-					var message = titles[result.title].title + " " + data.character + " has " + result.Gold + " Gold and " + result.XP + " XP, ";
-					var wornItemList = parseStringToIntArray(result.wornItems);
-					var wornItemList2 = [];
-					for (var i = 0; i < wornItemList.length; i++) {
-						var j = busca3(items, wornItemList[i]);
-						wornItemList2[i] = items[j].title;
-					}
-					message += "and is wearing the following items: " + wornItemList2.toString() + ".\n";
-					fChatLibInstance.sendMessage(message, channel);
-				}
-			} else {
-				fChatLibInstance.sendPrivMessage(data.character, "You're not listed, leave and rejoin the room to get added.");
-			}
-		});
-	}
+    const reply = respondPrivate(data.character);
+    client.hgetall(data.character, function (err, user) {
+      if (user != null) {
+        if (user.banned === "FALSE") {
+          respondChannel(`${
+            (titles.find((x) => x.id == user.title) || {title: ''}).title || ''
+            } ${
+            userBBC(data.identifier)
+            } has ${
+            user.Gold
+            } Gold and ${
+            user.XP
+            } XP, and is wearing the following items: ${
+            parseStringToIntArray(user.wornItems).map(
+              id => `• ${((items.find(item => item.id === id) || {title: ''}).title || '').replace(/_/g, ' ')}`
+            ).filter(x => x).join(',\n')
+            }`);
+        }
+      } else {
+        reply("You're not listed, leave and rejoin the room to get added.");
+      }
+    });
+  };
 	
 	cmdHandler.myStats = function (args, data) {
 		client.hgetall(data.character, function (err, result) {
@@ -803,14 +808,5 @@ function busca3(lista, nombre) {
 }
 
 function parseStringToIntArray(myString) {
-    var myArray = myString.split(",");
-    for (var i = 0; i < myArray.length; i++) {
-        if (!isNaN(myArray[i]) && myArray[i] != "") {
-            myArray[i] = parseInt(myArray[i]);
-        }
-        else {
-            myArray.splice(i, 1);
-        }
-    }
-    return myArray;
+    return (myString||'').split(',').map(x=>Number(x)).filter(x=>!isNaN(x));
 }
