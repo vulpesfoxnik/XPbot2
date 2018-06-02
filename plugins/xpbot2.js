@@ -647,107 +647,47 @@ If you want me to delete the old user, please type:
 			fChatLibInstance.sendPrivMessage(data.character, "The item " + args + " does not exist.");
 		}
 	}
-	
-	/* cmdHandler.myTitles = function (args, data) {
-		client.hgetall(data.character, function (err, result) {
-			if (result != null) {
-				if (result.banned == "false") {
-					var titleList = parseStringToIntArray(result.titleList);
-					var titleList2 = [];
-					for (var i = 0; i < titleList.length; i++) {
-						titleList2[i] = titles[titleList[i]].title;
-					}
-					var message = "You have the folowing titles: " + titleList2.toString() + ".";
-					fChatLibInstance.sendPrivMessage(data.character, message);
-				}
-			} else {
-				fChatLibInstance.sendPrivMessage(data.character, "You're not listed, leave and rejoin the room to get added.");
-			}
-		});
-	} */
-	
-	/* cmdHandler.myItems = function (args, data) {
-		client.hgetall(data.character, function (err, result) {
-			if (result != null) {
-				if (result.banned == "false") {
-					var itemList = parseStringToIntArray(result.ownedItems);
-					var itemList2 = [];
-					for (var i = 0; i < itemList.length; i++) {
-						itemList2[i] = items[itemList[i]].title;
-					}
-					var message = "You have the folowing items: " + itemList2.toString() + ".";
-					fChatLibInstance.sendPrivMessage(data.character, message);
-				}
-			} else {
-				fChatLibInstance.sendPrivMessage(data.character, "You're not listed, leave and rejoin the room to get added.");
-			}
-		});
-	} */
-	
-/* 	cmdHandler.titles = function (args, data) {
-		turno();
-		userlist = jsonfile.readFileSync("userlist.json");
-		var message = "Characters currently in database:\n";
-		for (var i = 0; i < userlist.length; i++) {
-			message += userlist[i].title + " " + userlist[i].nombre + "\n";
-		}
-		fChatLibInstance.sendPrivMessage(data.character, message);
-	} */
-	
-	cmdHandler.titleShop = function (args, data) {
-		var message = "Welcome to the title shop!\n";
-		message += "The current titles you can buy are:\n";
-		for (var i = 1; i < titles.length; i++) { //Alter Var i = # for what ID # to start at.  21.
-			//message += "- " + titles[i].title + ", " + titles[i].XP + " XP and " + titles[i].Gold + " Gold\n";
-			message += "- " + titles[i].title + ", " + titles[i].Gold + " Gold and " + titles[i].XP + " XP\n";
-		}
-		fChatLibInstance.sendPrivMessage(data.character, message);
+
+
+	function lineItem (item) {
+	  return `- ${item.title} for ${item.Gold} Gold and ${item.XP} XP`;
 	}
-	
-	cmdHandler.weapons = function (args, data) {
-		var message = "Welcome to the Weapon shop!\n";
-		message += "The current Weapons you can buy are:\n";
-		for (var i = 5; i < 11; i++) { //Alter Var i = # for what ID # to start at.
-			//message += "- " + items[i].title + ", " + items[i].XP + " XP and " + items[i].Gold + " Gold\n";
-			message += "- " + items[i].title + ", " + items[i].Gold + " Gold and " + items[i].XP + " XP\n";
-		}
-		fChatLibInstance.sendPrivMessage(data.character, message);
-	}
-	//////////////////////////
-	//Start of Modifications//
-	//////////////////////////////////////////////////////////////////////////////////////////////////////////
-	//Alter the Item shop to display different item lists, By altering the var i=# line.					//
-	//IE: the file remains the same. Simply the command pulls from a different ID number. Setting at 1000.  //
-	//var i = 5; i < 50; i++ makes it show items 5 through 50. Using this to sort the list.					//
-	//////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+  cmdHandler.titleShop = function (args, data) {
+    respondPrivate(data.character, `Welcome to the Title Shop!
+The current titles you can buy are:
+${titles.filter((x)=>!x.hidden).map(lineItem).join('\n')}`
+    );
+	};
+
+
+  cmdHandler.weapons = function (args, data) {
+		respondPrivate(data.character, `Welcome to the Weapon Shop!
+The current weapons you can buy are:
+${items.filter((x)=>x.type === 'weapon' && !x.hidden).map(lineItem).join('\n')}`
+    );
+	};
+
 	cmdHandler.armor = function (args, data) {
-		var message = "Welcome to the Armor shop!\n";
-		message += "The current Armors you can buy are:\n";
-		for (var i = 11; i < 15; i++) { //Alter Var i = # for what ID # to start at.
-			//message += "- " + items[i].title + ", " + items[i].XP + " XP and " + items[i].Gold + " Gold\n";
-			message += "- " + items[i].title + ", " + items[i].Gold + " Gold and " + items[i].XP + " XP\n";
-		}
-		fChatLibInstance.sendPrivMessage(data.character, message);
-	}
+    respondPrivate(data.character, `Welcome to the Weapon Shop!
+The current armor you can buy are:
+${items.filter((x)=>x.type === 'armor' && !x.hidden).map(lineItem).join('\n')}`
+    );
+	};
+
 	cmdHandler.clothes = function (args, data) {
-		var message = "Welcome to the Clothing shop!\n";
-		message += "The current Clothing you can buy are:\n";
-		for (var i = 15; i < 47; i++) { //Alter Var i = # for what ID # to start at.
-			//message += "- " + items[i].title + ", " + items[i].XP + " XP and " + items[i].Gold + " Gold\n";
-			message += "- " + items[i].title + ", " + items[i].Gold + " Gold and " + items[i].XP + " XP\n";
-		}
-		fChatLibInstance.sendPrivMessage(data.character, message);
-	}
+    respondPrivate(data.character, `Welcome to the Clothing Shop!
+The current clothing you can buy are:
+${items.filter((x)=>x.type === 'garment' && !x.hidden).map(lineItem).join('\n')}`
+    );
+	};
+
 	cmdHandler.items = function (args, data) {
-		var message = "Welcome to the item shop!\n";
-		message += "The current items you can buy are:\n";
-		for (var i = 47; i < items.length; i++) { //Alter Var i = # for what ID # to start at.
-			//message += "- " + items[i].title + ", " + items[i].XP + " XP and " + items[i].Gold + " Gold\n";
-			message += "- " + items[i].title + ", " + items[i].Gold + " Gold and " + items[i].XP + " XP\n";
-		}
-		fChatLibInstance.sendPrivMessage(data.character, message);
-	}
-	//End of Modifications//
+    respondPrivate(data.character, `Welcome to the Item Shop!
+The current items you can buy are:
+${items.filter((x)=>x.type === 'item' && !x.hidden).map(lineItem).join('\n')}`
+    );
+	};
 	
 	cmdHandler.buyTitle = function (args, data) {
 		var titleAsked = busca(titles, args);

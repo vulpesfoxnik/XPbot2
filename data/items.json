@@ -48,75 +48,11 @@
     "hidden": false
   },
   {
-    "id": 15,
-    "title": "Short_Sword",
-    "XP": 200,
-    "Gold": 900,
-    "type": "weapon",
-    "hidden": false
-  },
-  {
-    "id": 22,
-    "title": "Leather_Whip",
-    "XP": 120,
-    "Gold": 450,
-    "type": "weapon",
-    "hidden": false
-  },
-  {
-    "id": 23,
-    "title": "Paddle",
-    "XP": 10,
-    "Gold": 350,
-    "type": "weapon",
-    "hidden": false
-  },
-  {
-    "id": 36,
-    "title": "Frying_Pan",
-    "XP": 10,
-    "Gold": 150,
-    "type": "weapon",
-    "hidden": false
-  },
-  {
-    "id": 52,
-    "title": "Zweihander",
-    "XP": 500,
-    "Gold": 4500,
-    "type": "weapon",
-    "hidden": false
-  },
-  {
-    "id": 13,
-    "title": "Chainmail_Bikini",
-    "XP": 1000,
-    "Gold": 2900,
-    "type": "armor",
-    "hidden": false
-  },
-  {
-    "id": 21,
-    "title": "Platemail_Bikini",
-    "XP": 1000,
-    "Gold": 4800,
-    "type": "armor",
-    "hidden": false
-  },
-  {
-    "id": 24,
-    "title": "Metalic_Armor",
-    "XP": 0,
-    "Gold": 5350,
-    "type": "armor",
-    "hidden": false
-  },
-  {
-    "id": 25,
-    "title": "Magical_robe",
-    "XP": 0,
-    "Gold": 10000,
-    "type": "armor",
+    "id": 6,
+    "title": "Pheonix_Down",
+    "XP": 300,
+    "Gold": 300,
+    "type": "item",
     "hidden": false
   },
   {
@@ -168,11 +104,27 @@
     "hidden": false
   },
   {
+    "id": 13,
+    "title": "Chainmail_Bikini",
+    "XP": 1000,
+    "Gold": 2900,
+    "type": "armor",
+    "hidden": false
+  },
+  {
     "id": 14,
     "title": "Lingerie",
     "XP": 100,
     "Gold": 100,
     "type": "garment",
+    "hidden": false
+  },
+  {
+    "id": 15,
+    "title": "Short_Sword",
+    "XP": 200,
+    "Gold": 900,
+    "type": "weapon",
     "hidden": false
   },
   {
@@ -216,6 +168,46 @@
     "hidden": false
   },
   {
+    "id": 21,
+    "title": "Platemail_Bikini",
+    "XP": 1000,
+    "Gold": 4800,
+    "type": "armor",
+    "hidden": false
+  },
+  {
+    "id": 22,
+    "title": "Leather_Whip",
+    "XP": 120,
+    "Gold": 450,
+    "type": "weapon",
+    "hidden": false
+  },
+  {
+    "id": 23,
+    "title": "Paddle",
+    "XP": 10,
+    "Gold": 350,
+    "type": "weapon",
+    "hidden": false
+  },
+  {
+    "id": 24,
+    "title": "Metalic_Armor",
+    "XP": 0,
+    "Gold": 5350,
+    "type": "armor",
+    "hidden": false
+  },
+  {
+    "id": 25,
+    "title": "Magical_robe",
+    "XP": 0,
+    "Gold": 10000,
+    "type": "armor",
+    "hidden": false
+  },
+  {
     "id": 26,
     "title": "Angel_wings",
     "XP": 0,
@@ -229,6 +221,14 @@
     "XP": 50,
     "Gold": 2000,
     "type": "garment",
+    "hidden": false
+  },
+  {
+    "id": 28,
+    "title": "Jar of Dirt",
+    "XP": 10,
+    "Gold": 10,
+    "type": "item",
     "hidden": false
   },
   {
@@ -269,6 +269,30 @@
     "XP": 500,
     "Gold": 500,
     "type": "garment",
+    "hidden": false
+  },
+  {
+    "id": 34,
+    "title": "Gouda_Cheese",
+    "XP": 0,
+    "Gold": 100,
+    "type": "item",
+    "hidden": false
+  },
+  {
+    "id": 35,
+    "title": "Colby_Cheese",
+    "XP": 0,
+    "Gold": 50,
+    "type": "item",
+    "hidden": false
+  },
+  {
+    "id": 36,
+    "title": "Frying_Pan",
+    "XP": 10,
+    "Gold": 150,
+    "type": "weapon",
     "hidden": false
   },
   {
@@ -352,62 +376,6 @@
     "hidden": false
   },
   {
-    "id": 52,
-    "title": "Viking_Beard",
-    "XP": 150,
-    "Gold": 329,
-    "type": "garment",
-    "hidden": false
-  },
-  {
-    "id": 53,
-    "title": "Ninja_Suit",
-    "XP": 1000,
-    "Gold": 600,
-    "type": "garment",
-    "hidden": false
-  },
-  {
-    "id": 54,
-    "title": "Pirate_Garb",
-    "XP": 600,
-    "Gold": 1000,
-    "type": "garment",
-    "hidden": false
-  },
-  {
-    "id": 6,
-    "title": "Pheonix_Down",
-    "XP": 300,
-    "Gold": 300,
-    "type": "item",
-    "hidden": false
-  },
-  {
-    "id": 28,
-    "title": "Jar of Dirt",
-    "XP": 10,
-    "Gold": 10,
-    "type": "item",
-    "hidden": false
-  },
-  {
-    "id": 34,
-    "title": "Gouda_Cheese",
-    "XP": 0,
-    "Gold": 100,
-    "type": "item",
-    "hidden": false
-  },
-  {
-    "id": 35,
-    "title": "Colby_Cheese",
-    "XP": 0,
-    "Gold": 50,
-    "type": "item",
-    "hidden": false
-  },
-  {
     "id": 47,
     "title": "Pepperjack_Cheese",
     "XP": 0,
@@ -445,6 +413,38 @@
     "XP": 20,
     "Gold": 145,
     "type": "item",
+    "hidden": false
+  },
+  {
+    "id": 52,
+    "title": "Viking_Beard",
+    "XP": 150,
+    "Gold": 329,
+    "type": "garment",
+    "hidden": false
+  },
+  {
+    "id": 52,
+    "title": "Zweihander",
+    "XP": 500,
+    "Gold": 4500,
+    "type": "weapon",
+    "hidden": false
+  },
+  {
+    "id": 53,
+    "title": "Ninja_Suit",
+    "XP": 1000,
+    "Gold": 600,
+    "type": "garment",
+    "hidden": false
+  },
+  {
+    "id": 54,
+    "title": "Pirate_Garb",
+    "XP": 600,
+    "Gold": 1000,
+    "type": "garment",
     "hidden": false
   },
   {
