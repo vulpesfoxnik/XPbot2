@@ -9,10 +9,10 @@ module.exports = JSON.parse(fs.readFileSync("./data/items.json"))||[];
 
 /**
  * @typedef {object} ItemSource
- * @param  {number} id
- * @param {string} title
- * @param {number} XP
- * @param {number} Gold
- * @param {boolean} hidden
- * @param {ItemType} type
+ * @prop  {number} id
+ * @prop {string} title
+ * @prop {number} XP
+ * @prop {number} Gold
+ * @prop {boolean} hidden
+ * @prop {ItemType} type
  */

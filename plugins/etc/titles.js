@@ -6,9 +6,9 @@ module.exports = JSON.parse(fs.readFileSync("./data/titles.json")) ||[];
 
 /**
  * @typedef {object} TitleSource
- * @param  {number} id
- * @param {string} title
- * @param {number} XP
- * @param {number} Gold
- * @param {boolean} hidden
+ * @prop  {number} id
+ * @prop {string} title
+ * @prop {number} XP
+ * @prop {number} Gold
+ * @prop {boolean} hidden
  */
