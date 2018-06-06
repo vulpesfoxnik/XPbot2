@@ -1,18 +1,28 @@
-var fChatLibInstance;
-var channel;
-var jsonfile = require('jsonfile');
-var redis = require("redis");
-var client = redis.createClient(6379, "127.0.0.1");
+const redis = require("redis");
+const client = redis.createClient(6379, "127.0.0.1");
+/**
+ * @type {User}
+ */
 const User = require('../model/user');
-var titles = require('./etc/titles.js');
-var items = require('./etc/items.js');
-var configuration = require('./etc/config.js');
+/**
+ * @type {Array<TitleSource>}
+ */
+const titles = require('./etc/titles.js');
+/**
+ * @type {Array<ItemSource>}
+ */
+const items = require('./etc/items.js');
+/**
+ * @type {ItemStore}
+ */
+const itemStore = require('../model/item-store');
+const configuration = require('./etc/config.js');
 
 module.exports = function (parent, chanName) {
-    fChatLibInstance = parent;
+    const fChatLibInstance = parent;
 
-    var cmdHandler = {};
-    channel = chanName;
+    const cmdHandler = {};
+    const channel = chanName;
 	
 	client.on("error", function (err) {
         console.log("Redis error " + err);
@@ -318,6 +328,50 @@ If you want me to delete the old user, please type:
         reply(`I'm sorry master, I could not find ${chara.userCode}. Perhaps they were already erased?`);
       }
     );
+  });
+
+  cmdHandler.sellItem = adminOnly(function (arg, messenger) {
+    const reply = respondPrivate(messenger.character);
+    const parse = args.match(/!sellItem\s+([^ ]+)\s+([a-z]+)\s+(\d+)\s+(\d+)/);
+    if (parse) {
+      const itemName = parse[1];
+      itemStore.listItem(itemName, parse[2], Number(parse[3]), Number(parse[4])).then(
+        (...[itemStore, item, isNewItem]) => reply(
+          `Master, I ${
+            isNewItem ? 'created the new' : 'updated the'
+            } item "${underscoreToSpace(item.title)}" for sale as a "${item.type}" for ${item.Gold} Gold and ${item.XP} XP.`
+        )
+        , () => reply(`Sorry master, I was unable to add your ${underscoreToSpace(itemName)} to the store.`)
+      );
+    } else {
+      reply(`I'm sorry master, I did not understand. Please phrase your request as follows:
+!sellItem Item_Name <item type> <Gold> <XP>
+
+Possible Item Types:
+${Object.values(itemStore.constructor.TYPES).map((x) => `• ${x}`).join('\n')}
+Gold: Positive Integer
+XP: Positive Integer
+`);
+    }
+  });
+
+  cmdHandler.delistItem = adminOnly(function () {
+    const reply = respondPrivate(messenger.character);
+    const parse = args.match(/!sellItem\s+([^ ]+)\s+(true|false)/);
+    if (parse) {
+      const itemName = parse[1], hidden = JSON.parse(parse[2]);
+      itemStore.hide(itemName, hidden).then(
+        ()=>reply(`Master, I ${hidden ? 'delisted' : 'relisted'} ${underscoreToSpace(itemName)}.`)
+        , ()=>reply(`Master, I wasn't able to change the visiblity of ${underscoreToSpace(itemName)}.`)
+      );
+    } else {
+      reply(`I'm sorry master, I didn't understand your request. Please phase it as such:
+!delistItem Item_Name <hidden>
+Possible Hidden Value: true false
+`
+      );
+    }
+
   });
 
 	/* cmdHandler.toggleXPtrade = function (args, data) {
@@ -654,14 +708,28 @@ If you want me to delete the old user, please type:
 	}
 
 
+  /**
+   *
+   * @param {ItemSource|TitleSource} item
+   * @returns {string}
+   */
 	function lineItem (item) {
 	  return `- ${item.title} for ${item.Gold} Gold and ${item.XP} XP`;
 	}
 
+  /**
+   *
+   * @param {ItemSource|TitleSource} item
+   * @returns {boolean}
+   */
+	function visible(item) {
+	  return !item.hidden;
+  }
+
   cmdHandler.titleShop = function (args, data) {
     respondPrivate(data.character, `Welcome to the Title Shop!
 The current titles you can buy are:
-${titles.filter((x)=>!x.hidden).map(lineItem).join('\n')}`
+${titles.filter(visible).map(lineItem).join('\n')}`
     );
 	};
 
@@ -669,28 +737,28 @@ ${titles.filter((x)=>!x.hidden).map(lineItem).join('\n')}`
   cmdHandler.weapons = function (args, data) {
 		respondPrivate(data.character, `Welcome to the Weapon Shop!
 The current weapons you can buy are:
-${items.filter((x)=>x.type === 'weapon' && !x.hidden).map(lineItem).join('\n')}`
+${itemStore.weapon.filter(visible).map(lineItem).join('\n')}`
     );
 	};
 
 	cmdHandler.armor = function (args, data) {
     respondPrivate(data.character, `Welcome to the Weapon Shop!
 The current armor you can buy are:
-${items.filter((x)=>x.type === 'armor' && !x.hidden).map(lineItem).join('\n')}`
+${itemStore.armor.filter(visible).map(lineItem).join('\n')}`
     );
 	};
 
 	cmdHandler.clothes = function (args, data) {
     respondPrivate(data.character, `Welcome to the Clothing Shop!
 The current clothing you can buy are:
-${items.filter((x)=>x.type === 'garment' && !x.hidden).map(lineItem).join('\n')}`
+${itemStore.garment.filter(visible).map(lineItem).join('\n')}`
     );
 	};
 
 	cmdHandler.items = function (args, data) {
     respondPrivate(data.character, `Welcome to the Item Shop!
 The current items you can buy are:
-${items.filter((x)=>x.type === 'item' && !x.hidden).map(lineItem).join('\n')}`
+${itemStore.item.filter(visible).map(lineItem).join('\n')}`
     );
 	};
 	
@@ -749,7 +817,6 @@ ${items.filter((x)=>x.type === 'item' && !x.hidden).map(lineItem).join('\n')}`
 			fChatLibInstance.sendPrivMessage("The item " + args + " wasn't found in the shop.");
 		}
 	}
-	// = is to set a variable, == is to compare two values, === is to compare type and value
 	// FALSE and false are two different variables, Consider changing them?
 	/* tack on .toLowerCase() or .toUpperCase() on strings you want to evaluate.
 	Arianna Altomare: Ex: var string = 'Something
@@ -809,4 +876,8 @@ function busca3(lista, nombre) {
 
 function parseStringToIntArray(myString) {
     return (myString||'').split(',').map(x=>Number(x)).filter(x=>!isNaN(x));
+}
+
+function underscoreToSpace (string = '') {
+  return string.title.replace(/_/, ' ');
 }
