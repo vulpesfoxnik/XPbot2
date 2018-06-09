@@ -49,7 +49,7 @@
   },
   {
     "id": 6,
-    "title": "Pheonix_Down",
+    "title": "Phoenix_Down",
     "XP": 300,
     "Gold": 300,
     "type": "item",
@@ -193,7 +193,7 @@
   },
   {
     "id": 24,
-    "title": "Metalic_Armor",
+    "title": "Metallic_Armor",
     "XP": 0,
     "Gold": 5350,
     "type": "armor",
@@ -217,7 +217,7 @@
   },
   {
     "id": 27,
-    "title": "Naughty_Swimware",
+    "title": "Naughty_Swimwear",
     "XP": 50,
     "Gold": 2000,
     "type": "garment",
@@ -417,14 +417,6 @@
   },
   {
     "id": 52,
-    "title": "Viking_Beard",
-    "XP": 150,
-    "Gold": 329,
-    "type": "garment",
-    "hidden": false
-  },
-  {
-    "id": 52,
     "title": "Zweihander",
     "XP": 500,
     "Gold": 4500,
@@ -449,7 +441,7 @@
   },
   {
     "id": 55,
-    "title": "Jewelled Buttplug",
+    "title": "Jewelled_Buttplug",
     "XP": 100,
     "Gold": 300,
     "type": "item",
@@ -461,6 +453,14 @@
     "XP": 10,
     "Gold": 1000,
     "type": "item",
+    "hidden": false
+  },
+  {
+    "id": 57,
+    "title": "Viking_Beard",
+    "XP": 150,
+    "Gold": 329,
+    "type": "garment",
     "hidden": false
   }
 ]
