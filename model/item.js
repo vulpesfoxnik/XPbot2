@@ -1,4 +1,5 @@
 const Op = require('sequelize').Op;
+const {constant, getterSetter, scanify} = require('./util');
 
 module.exports = function (sequelize, DataTypes) {
     const Item = sequelize.define('Item', {
@@ -31,33 +32,33 @@ module.exports = function (sequelize, DataTypes) {
             type: DataTypes.BOOLEAN,
             defaultValue: false,
             field: 'not_for_sale',
-            get() {
-                return Boolean(this.getDataValue("notForSale"));
-            }
+            // get() {
+            //     return Boolean(this.getDataValue("notForSale"));
+            // }
         },
         itemTypeId: {
             type: DataTypes.INTEGER,
             allowNull: false,
             defaultValue: 0,
-            field: 'item_type_id'
+            field: 'item_type_id',
         },
         inert: {
             type: DataTypes.BOOLEAN,
             allowNull: false,
             defaultValue: false,
-            get() {
-                return Boolean(this.getDataValue("inert"));
-            }
+            // get() {
+            //     return Boolean(this.getDataValue("inert"));
+            // }
         },
     }, {
         tableName: 'item',
         timestamps: false,
-        defaultScope: {
-            where: {
-                inert: false
-            }
-        },
         scopes: {
+            inert: {
+                where: {
+                    inert: false
+                }
+            },
             deleted: {
                 where: {
                     inert: true
@@ -89,31 +90,37 @@ module.exports = function (sequelize, DataTypes) {
         });
     };
 
+    function findByItemTypeFn(itemTypeName) {
+        return () => {
+            return Item.findAll({
+                include: [{
+                    model: 'ItemType',
+                    as: 'type'
+                }],
+                where: {'type.name': itemTypeName}
+            });
+        }
+    }
+
+    Object.defineProperties(Item, {
+        getAllWeapon: constant(findByItemTypeFn('weapon')),
+        getAllArmor: constant(findByItemTypeFn('armor')),
+        getAllGarment: constant(findByItemTypeFn('garment')),
+        getAllDefault: constant(findByItemTypeFn('item')),
+        getAllMisc: constant(findByItemTypeFn('unclassified')),
+    });
+
+    function forbidSale(state) {
+        return () => {
+            this.notForSale = state;
+            return this.save();
+        }
+    }
+
+    Object.defineProperties(Item.prototype, {
+        permitSale: constant(forbidSale(false)),
+        forbidSale: constant(forbidSale(true)),
+    });
+
     return Item;
 };
-
-// const store = require('../plugins/etc/items.js');
-// class Item {
-//   constructor(id) {
-//     this.id = Number(id);
-//     this.instance = null;
-//   }
-//   populate() {
-//     return new Promise((resolve, reject)=>{
-//       const entry = store.find((obj)=>obj.id === this.id);
-//       console.log(entry);
-//       if (entry) {
-//         this.instance = Object.assign({}, entry);
-//         resolve(this);
-//       } else {
-//         reject(null);
-//       }
-//     });
-//   }
-//
-//   get name () {
-//     return this.instance && this.instance.title.replace(/_/g, ' ');
-//   }
-// }
-//
-// module.exports = Item;

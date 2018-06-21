@@ -1,4 +1,5 @@
 const Op = require('sequelize').Op;
+const {constant, getterSetter} = require('./util');
 
 module.exports = (sequelize, DataTypes) => {
     const ItemType = sequelize.define('ItemType', {

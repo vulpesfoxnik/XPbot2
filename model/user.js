@@ -1,177 +1,115 @@
-const {promisify} = require('util');
-const redis = require("redis");
-const client = redis.createClient(6379, "127.0.0.1");
+const Op = require('sequelize').Op;
+const {getterSetter, constant, scanify} = require('./util');
 
-const expKey = 'XP'
-    , goldKey = 'Gold'
-    , currentTitle = 'title'
-    , titlesKey = 'titleList'
-    , itemsKey = 'items'
-    , equippedKey = 'wornItems'
-    , inventoryKey = 'ownedItems'
-    , noticeKey = 'notices';
+module.exports = function (sequelize, DataTypes) {
+    const User = sequelize.define('User', {
+        id: {
+            type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true, allowNull: false,
+            field: 'user_id'
+        },
+        identifier: {type: DataTypes.STRING, field: 'identifier', allowNull: false},
+        identifierScan: {type: DataTypes.STRING, field: 'identifier_scan', unique: true, allowNull: false},
+        exp: {type: DataTypes.INTEGER, field: 'exp', defaultValue: 0, allowNull: false},
+        gold: {type: DataTypes.INTEGER, field: 'gold', defaultValue: 0, allowNull: false},
+        banned: {
+            type: DataTypes.BOOLEAN, field: 'banned', allowNull: false,
+            defaultValue: false,
+            // get() {
+            //     return Boolean(this.getDataValue("banned"));
+            // }
+        },
+        notices: {
+            type: DataTypes.BOOLEAN, field: 'notices', allowNull: false,
+            defaultValue: true,
+            // get() {
+            //     return Boolean(this.getDataValue("notices"));
+            // }
+        },
+        password: {
+            type: DataTypes.STRING, field: 'password', allowNull: false, defaultValue: ''
+        }
 
+    }, {
+        tableName: 'users',
+        timestamps: false
+    });
 
-
-class User {
-    constructor(id) {
-        this.id = id;
-        this.instance = null;
-    }
-
-    populate(force) {
-        return new Promise((resolve, reject) => {
-            if (!force || this.instance) {
-                resolve(this);
-            } else {
-                client.hgetall(this.id, (err, instance) => {
-                    if (instance != null) {
-                        this.instance = instance;
-                        resolve(this);
-                    } else {
-                        reject(err);
-                    }
-                });
-            }
-        })
+    User.associate = function associate(models) {
+        User.belongsToMany(models.Item, {
+            as: "equippedItems",
+            through: "user_item",
+            foreignKey: "user_id",
+            otherKey: "item_id",
+            timestamps: false
+        });
+        User.belongsToMany(models.Item, {
+            as: "ownedItems",
+            through: "user_owned_item",
+            foreignKey: "user_id",
+            otherKey: "item_id",
+            timestamps: false
+        });
+        User.belongsToMany(models.Title, {
+            as: "equippedTitle",
+            through: "user_title",
+            foreignKey: "user_id",
+            otherKey: "title_id",
+            timestamps: false
+        });
+        User.belongsToMany(models.Title, {
+            as: "ownedTitles",
+            through: "user_owned_title",
+            foreignKey: "user_id",
+            otherKey: "title_id",
+            timestamps: false
+        });
     };
 
-    store() {
-        return new Promise((resolve, reject) => {
-            if (this.instance) {
-                client.hmset(this.id, this.instance, (err, resp) => {
-                    if (err) {
-                        reject(err);
-                    } else {
-                        resolve(this);
-                    }
+    User.initializeUser = (function () {
+        const Item = User.sequelize.models.Item;
+        const Title = User.sequelize.models.Title;
+        return (identifier) => {
+            return User.create({
+                identifier: identifier,
+                identifierScan: scanify(identifier),
+            }).then(savedUser => {
+                let items = Item.findAll({where: {[Op.or]: [{id: 0}, {id: 4}]}});
+                let titles = Title.findAll({where: {id: 0}});
+                return Promise.all([items, titles]).then(results => {
+                    savedUser.setOwnedTitles(results[1]);
+                    savedUser.setEquippedTitle(results[1]);
+                    savedUser.setOwnedItems(results[0]);
+                    savedUser.setEquippedItems(results[0]);
+                    return savedUser.save();
                 });
-            } else {
-                reject({null: true});
-            }
-        });
-    }
-
-    copyTo(targetUser) {
-        return this.populate(true).then(() => {
-            targetUser.instance = Object.assign({}, targetUser.instance, {identifier: this.id});
-            return targetUser.store();
-        });
-    }
-
-    exists() {
-        return new Promise((resolve) => {
-            client.hexists(this.id, (error, exists) => {
-                if (exists) {
-                    resolve(this);
-                } else {
-                    reject(error);
-                }
             });
-        });
-    }
+        };
+    }());
 
-    erase() {
-        return new Promise((resolve, reject) => {
-            client.del(this.id, (err, response) => {
-                if (err) {
-                    reject(err);
-                } else {
-                    resolve(null);
-                }
+    Object.defineProperties(User, {
+        banById: constant((id) => {
+            return User.find({identifierScan: scanify(id)}).then(user => {
+                if (!user)
+                    return Promise.reject(null);
+                user.banned = true;
+                return user.save();
             });
+        }),
+        unbanById: constant((id) => {
+            return User.find({identifierScan: scanify(id)}).then(user => {
+                if (!user)
+                    return Promise.reject(null);
+                user.banned = false;
+                return user.save();
+            });
+        }),
+    });
+
+    Object.defineProperties(User.prototype, {
+        userCode: getterSetter(function() {
+            return `[user]${this.identifier}[/user]`;
         })
-    }
+    });
 
-    get userCode() {
-        return `[user]${this.id}[/user]`;
-    }
-
-    get userIcon() {
-        return `[icon]${this.id}[/icon]`
-    }
-
-    ban(boolean) {
-        return new Promise((resolve, reject) => {
-            client.hmset(this.id, {
-                identifier: this.id,
-                banned: String(Boolean(boolean)).toUpperCase()
-            }, (err, resp) => {
-                if (err) {
-                    reject(err);
-                } else {
-                    resolve(this);
-                }
-            });
-        });
-    }
-
-
-    addExp(amount) {
-        return new Promise((resolve, reject) => {
-            client.hmget(this.id, expKey, (err, exp) => {
-                const newValue = Number(exp) + Number(amount);
-                if (isNaN(newValue)) {
-                    reject({NaN: true});
-                } else {
-                    resolve(this.setExp(Math.min(newValue, 0)));
-                }
-            });
-        });
-    }
-
-    setExp(amount) {
-        return new Promise((resolve, reject) => {
-            client.hmset(this.id, expKey, amount, (err) => {
-                if (err) {
-                    reject(err);
-                } else {
-                    resolve(this);
-                }
-            });
-        });
-    }
-
-    addGold(amount) {
-        amount = Number(amount);
-        return isNaN(amount) ? Promise.reject({NaN: true}) : new Promise((resolve) => {
-            client.hmget(this.id, goldKey, (err, exp) => {
-                resolve(this.setExp(Math.max(exp + amount, 0)));
-            });
-        });
-    }
-
-    setGold(amount) {
-        return new Promise((resolve, reject) => {
-            client.hmset(this.id, goldKey, amount, (err) => {
-                if (err) {
-                    reject(err);
-                } else {
-                    resolve(this);
-                }
-            });
-        });
-    }
-
-
-    reset() {
-        return new Promise((resolve, reject) => {
-            client.hmset(
-                this.id
-                , {
-                    character: this.id, banned: "FALSE", XP: 0, Gold: 0, title: 0
-                    , titleList: "0", wornItems: "0", ownedItems: "0,4", notices: "FALSE"
-                }
-                , (err) => {
-                    if (err) {
-                        reject(err);
-                    } else {
-                        resolve(this);
-                    }
-                }
-            );
-        })
-    }
-}
-
-module.exports = User;
+    return User;
+};

@@ -9,15 +9,15 @@ module.exports = function (sequelize, DataTypes) {
         gold: {type: DataTypes.INTEGER, field: 'gold', allowNull: false, defaultValue: 0},
         notForSale: {
             type: DataTypes.BOOLEAN, field: 'not_for_sale', allowNull: false, defaultValue: false,
-            get() {
-                return Boolean(this.getDataValue("notForSale"));
-            }
+            // get() {
+            //     return Boolean(this.getDataValue("notForSale"));
+            // }
         },
         inert: {
             type: DataTypes.BOOLEAN, field: 'inert', allowNull: false, defaultValue: false,
-            get() {
-                return Boolean(this.getDataValue("inert"));
-            }
+            // get() {
+            //     return Boolean(this.getDataValue("inert"));
+            // }
         },
     }, {
         tableName: 'title'
@@ -38,31 +38,3 @@ module.exports = function (sequelize, DataTypes) {
 
     return Title;
 };
-
-
-// const store = require('../plugins/etc/titles.js');
-//
-// class Title {
-//   constructor(id) {
-//     this.id = Number(id);
-//     this.instance = null;
-//   }
-//   populate() {
-//     return new Promise((resolve, reject)=>{
-//       const entry = store.find(obj=>obj.id===this.id);
-//       if (entry) {
-//         this.instance = Object.assign({}, entry);
-//         resolve(this);
-//       } else {
-//         reject(null);
-//       }
-//     });
-//   }
-//
-//   get name () {
-//     return this.instance && this.instance.title.replace(/_/g, ' ');
-//   }
-// }
-//
-// module.exports = Title;
-
