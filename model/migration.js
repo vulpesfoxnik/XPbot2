@@ -32,7 +32,7 @@ function fuzzyBoolean(value) {
 
 const iBooleanLookup = (obj, key) => fuzzyBoolean(iLookup(obj, key) || false);
 
-function scan(cursor, count=100) {
+function scan(cursor, count = 100) {
     return new Promise((resolve, reject) => {
         client.scan(String(cursor), "MATCH", "*", "COUNT", String(count), function (err, data) {
             if (err) {
@@ -144,4 +144,7 @@ Promise.all([Item.findAll(), Title.findAll()])
         console.log(`Time taken: ${stop - start} milliseconds`);
     })
     .then(() => process.exit(0))
-    .catch(err => console.log(err));
+    .catch(err => {
+        console.log(err);
+        process.exit(-1);
+    });
