@@ -1,16 +1,20 @@
 {
   "name": "FChatBot-XP-BOT",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "private": true,
   "scripts": {
-    "start": "node app.js"
+    "start": "node app.js",
+    "migrate": "node models/migration.js"
   },
   "dependencies": {
     "deep-extend": "^0.6.0",
     "fchatlib": "*",
     "jsonfile": "2.3.*",
-    "redis": "2.6.*",
+    "redis": "2.8.*",
     "sequelize": "^4.37.10",
     "sqlite3": "^4.0.0"
+  },
+  "devDependencies": {
+    "faker": "^4.1.0"
   }
 }

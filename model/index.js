@@ -10,7 +10,7 @@ module.exports = function(sequelize) {
     sequelize.import('./item');
     sequelize.import('./itemType');
     sequelize.import('./title');
-    sequelize.import('./users');
+    sequelize.import('./user');
 
     Object.keys(sequelize.models).forEach(modelName => {
         if (typeof(sequelize.models[modelName].associate) === 'function') {
