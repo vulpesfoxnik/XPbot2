@@ -5,6 +5,8 @@ const Op = require('sequelize').Op;
 const Promise = require('sequelize').Promise;
 const {scanify} = require("./util");
 const crypto = require('crypto');
+const fs = require('fs');
+const path = require('path');
 const {performance} = require('perf_hooks');
 
 const legacyUserKeys = {
@@ -30,7 +32,7 @@ function fuzzyBoolean(value) {
 
 const iBooleanLookup = (obj, key) => fuzzyBoolean(iLookup(obj, key) || false);
 
-function scan(cursor, count=1000) {
+function scan(cursor, count=100) {
     return new Promise((resolve, reject) => {
         client.scan(String(cursor), "MATCH", "*", "COUNT", String(count), function (err, data) {
             if (err) {
@@ -70,16 +72,24 @@ const cache = {
     items: undefined,
     titles: undefined,
 };
+const archivePath = path.join(__dirname, "archived_redis.json");
+const redisMap = {};
 
 const crawlResults = (scanResult) => {
-    console.log(JSON.stringify(scanResult));
     const nextCursor = scanResult[0];
     const keys = scanResult[1];
+    crawlResults.count += 1;
+    console.log(`Search #${crawlResults.count}, found ${keys.length} keys.`);
     return Promise.all(keys.map(keyIsOfType))
-        .then(typedKeys => Promise.all(typedKeys.filter(k => k.type === "hash").map(k => getRedisUser(k.key))))
+        .then(typedKeys => Promise.all(typedKeys.filter(k => k.type === "hash").map(k => getRedisUser(k.key)
+            .then(u => ({key: k.key, user: u})))/*endMap*/))
         .then(users => {
+            users.reduce((m, u) => {
+                m[u.key] = u.user;
+                return m;
+            }, redisMap);
             if (!users || users.length < 1) return Promise.resolve(null);
-            const normalizedUsers = users.filter(u => Boolean(iLookup(u, legacyUserKeys.equippedTitle))).map(user => {
+            const normalizedUsers = users.map(u => u.user).filter(u => Boolean(iLookup(u, legacyUserKeys.equippedTitle))).map(user => {
                 const id = scanify(String(iLookup(user, legacyUserKeys.identifier)));
                 return {
                     id: id,
@@ -115,6 +125,7 @@ const crawlResults = (scanResult) => {
         })
         .then(() => nextCursor !== "0" ? scan(nextCursor).then(crawlResults) : true);
 };
+crawlResults.count = 0;
 
 console.log("Migrating...");
 const start = performance.now();
@@ -126,10 +137,11 @@ Promise.all([Item.findAll(), Title.findAll()])
     })
     .then(scan)
     .then(crawlResults)
+    .then(() => fs.writeFileSync(archivePath, JSON.stringify(redisMap), "utf8"))
     .then(() => {
         console.log("Complete!");
         const stop = performance.now();
         console.log(`Time taken: ${stop - start} milliseconds`);
     })
+    .then(() => process.exit(0))
     .catch(err => console.log(err));
-

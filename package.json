@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "start": "node app.js",
-    "migrate": "node models/migration.js"
+    "migrate": "node model/migration.js"
   },
   "dependencies": {
     "deep-extend": "^0.6.0",

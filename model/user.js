@@ -3,10 +3,7 @@ const {getterSetter, constant, scanify} = require('./util');
 
 module.exports = function (sequelize, DataTypes) {
     const User = sequelize.define('User', {
-        id: {
-            type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true, allowNull: false,
-            field: 'user_id'
-        },
+        id: {type: DataTypes.INTEGER, primaryKey: true, allowNull: false, field: 'user_id'},
         identifier: {type: DataTypes.STRING, field: 'identifier', allowNull: false},
         identifierScan: {type: DataTypes.STRING, field: 'identifier_scan', unique: true, allowNull: false},
         exp: {type: DataTypes.INTEGER, field: 'exp', defaultValue: 0, allowNull: false},
@@ -73,7 +70,7 @@ module.exports = function (sequelize, DataTypes) {
                 identifier: identifier,
                 identifierScan: scanify(identifier),
             }).then(savedUser => {
-                let items = Item.findAll({where: {[Op.or]: [{id: 0}, {id: 4}]}});
+                let items = Item.findAll({where: {id: {[Op.in]: [0,4]}}});
                 let titles = Title.findAll({where: {id: 0}});
                 return Promise.all([items, titles]).then(results => {
                     savedUser.setOwnedTitles(results[1]);
@@ -108,7 +105,7 @@ module.exports = function (sequelize, DataTypes) {
     Object.defineProperties(User.prototype, {
         userCode: getterSetter(function() {
             return `[user]${this.identifier}[/user]`;
-        })
+        }),
     });
 
     return User;
