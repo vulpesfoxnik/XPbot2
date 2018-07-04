@@ -65,6 +65,11 @@ function keyIsOfType(key) {
     });
 }
 
+function SafeNumber(value) {
+    const nValue = Number(value);
+    return isNaN(nValue) ? null : nValue;
+}
+
 const User = db.models.User;
 const Item = db.models.Item;
 const Title = db.models.Title;
@@ -96,17 +101,17 @@ const crawlResults = (scanResult) => {
                     model: {
                         identifier: String(iLookup(user, legacyUserKeys.identifier)),
                         identifierScan: id,
-                        gold: Number(iLookup(user, legacyUserKeys.gold) || 0),
-                        exp: Number(iLookup(user, legacyUserKeys.exp) || 0),
+                        gold: (SafeNumber(iLookup(user, legacyUserKeys.gold)) || 0),
+                        exp: (SafeNumber(iLookup(user, legacyUserKeys.exp)) || 0),
                         banned: iBooleanLookup(user, legacyUserKeys.banned),
                         notices: iBooleanLookup(user, legacyUserKeys.notices),
                         password: crypto.randomBytes(16).toString('base64'),
                     },
                     additionalProperties: {
-                        ownedItemIds: (iLookup(user, legacyUserKeys.ownedItems) || "0,4").split(",").map(Number),
-                        equippedItemIds: (iLookup(user, legacyUserKeys.ownedItems) || "0,4").split(",").map(Number),
-                        equippedTitleIds: (iLookup(user, legacyUserKeys.equippedTitle) || "0").split(",").map(Number),
-                        ownedTitleIds: (iLookup(user, legacyUserKeys.ownedTitles) || "0").split(",").map(Number),
+                        ownedItemIds: (iLookup(user, legacyUserKeys.ownedItems) || "0,4").split(",").map(SafeNumber),
+                        equippedItemIds: (iLookup(user, legacyUserKeys.ownedItems) || "0,4").split(",").map(SafeNumber),
+                        equippedTitleIds: (iLookup(user, legacyUserKeys.equippedTitle) || "0").split(",").map(SafeNumber),
+                        ownedTitleIds: (iLookup(user, legacyUserKeys.ownedTitles) || "0").split(",").map(SafeNumber),
                     },
                 };
             });
