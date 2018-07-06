@@ -70,6 +70,10 @@ function SafeNumber(value) {
     return isNaN(nValue) ? null : nValue;
 }
 
+function generatePassword(value) {
+    return crypto.randomBytes(16).toString("base64");
+}
+
 const User = db.models.User;
 const Item = db.models.Item;
 const Title = db.models.Title;

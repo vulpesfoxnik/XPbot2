@@ -10,17 +10,16 @@ function adminOnly(fn) {
         if (this.fChat.isUserChatOP(this.channel, data.character)) {
             return fn.call(this, args, data, reply, ...extra);
         } else {
-          reply("You are not my master!");
+            reply("You are not my master!");
         }
     };
 }
 
 function privateInteraction(fn) {
-  return function (args, data, ...extra) {
-    return fn.call(this, args, data, msg=>this.fChat.sendPrivMessage(data.character, msg), ...extra);
-  };
+    return function (args, data, ...extra) {
+        return fn.call(this, args, data, msg => this.fChat.sendPrivMessage(data.character, msg), ...extra);
+    };
 }
-
 
 // === Admin
 XPBot2.prototype.browse = privateInteraction(adminOnly(function (args, data, reply) {
