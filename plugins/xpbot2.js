@@ -1,4 +1,3 @@
-const strings = require("./lib/resource/strings");
 const db = require('../model')();
 
 function XPBot2(fChat, channel) {
@@ -7,22 +6,28 @@ function XPBot2(fChat, channel) {
 }
 
 function adminOnly(fn) {
-    return (args, data, ...extra) => {
+    return function (args, data, reply, ...extra) {
         if (this.fChat.isUserChatOP(this.channel, data.character)) {
-            fn.apply(this, [args, data, ...extra]);
+            return fn.call(this, args, data, reply, ...extra);
         } else {
-            this.fChat.sendPrivMessage(data.character, strings.UNAUTHORIZED);
+          reply("You are not my master!");
         }
     };
 }
 
+function privateInteraction(fn) {
+  return function (args, data, ...extra) {
+    return fn.call(this, args, data, msg=>this.fChat.sendPrivMessage(data.character, msg), ...extra);
+  };
+}
+
+
 // === Admin
-XPBot2.prototype.browse = function (args, data) {
-};
-XPBot2.prototype.banUser = adminOnly(function banUser(args, data) {
+XPBot2.prototype.browse = privateInteraction(adminOnly(function (args, data, reply) {
+}));
+XPBot2.prototype.ban = XPBot2.prototype.banUser = privateInteraction(adminOnly(function banUser(args, data, reply) {
     const argRegex1 = /^"([^"]+)"$/;
     const argRegex2 = /^([^ ]+)$/;
-    const reply = msg => this.fChat.sendPrivMessage(data.character, msg);
     const parsedArgs = argRegex1.exec(args) || argRegex2.exec(args);
     if (!parsedArgs) {
         reply(`I apologize master, I don't understand your request. Please phrase it like this:
@@ -41,47 +46,47 @@ XPBot2.prototype.banUser = adminOnly(function banUser(args, data) {
     }).catch(err => {
         reply(`Master, I was unable to find ${name},`)
     });
-});
-XPBot2.prototype.ban = XPBot2.prototype.banUser;
-XPBot2.prototype.unbanUser = function (args, data) {
-};
-XPBot2.prototype.unban = function (args, data) {
-};
-XPBot2.prototype.grantXP = function (args, data) {
-};
-XPBot2.prototype.grantGold = function (args, data) {
-};
-XPBot2.prototype.grantTitle = function (args, data) {
-};
-XPBot2.prototype.revokeTitle = function (args, data) {
-};
-XPBot2.prototype.replicateUser = function (args, data) {
-};
-XPBot2.prototype.deleteUser = function (args, data) {
-};
-XPBot2.prototype.sellItem = function (args, data) {
-};
-XPBot2.prototype.delistItem = function (args, data) {
-};
+}));
+
+XPBot2.prototype.unban = XPBot2.prototype.unbanUser = privateInteraction(adminOnly(function (args, data, reply) {
+}));
+XPBot2.prototype.grantXP = privateInteraction(adminOnly(function (args, data, reply) {
+}));
+XPBot2.prototype.grantGold = privateInteraction(adminOnly(function (args, data, reply) {
+}));
+XPBot2.prototype.grantTitle = privateInteraction(adminOnly(function (args, data, reply) {
+}));
+XPBot2.prototype.revokeTitle = privateInteraction(adminOnly(function (args, data, reply) {
+}));
+XPBot2.prototype.transferUser = privateInteraction(adminOnly(function (args, data, reply) {
+}));
+
+XPBot2.prototype.deleteUser = privateInteraction(adminOnly(function (args, data, reply) {
+}));
+
+XPBot2.prototype.sellItem = privateInteraction(adminOnly(function (args, data, reply) {
+}));
+XPBot2.prototype.delistItem = privateInteraction(adminOnly(function (args, data, reply) {
+}));
 
 // == User
-XPBot2.prototype.tradeXP = function (args, data) {
-};
-XPBot2.prototype.tradeGold = function (args, data) {
-};
-XPBot2.prototype.brag = function (args, data) {
-};
-XPBot2.prototype.myStats = function (args, data) {
-};
-XPBot2.prototype.view = function (args, data) {
-};
-XPBot2.prototype.equipTitle = function (args, data) {
-};
-XPBot2.prototype.equipItem = function (args, data) {
-};
-XPBot2.prototype.unequipItem = function (args, data) {
-};
-XPBot2.prototype.grantSilence = function (args, data) {
-};
-XPBot2.prototype.revokeSilence = function (args, data) {
-};
+XPBot2.prototype.tradeXP = privateInteraction(function (args, data, reply) {
+});
+XPBot2.prototype.tradeGold = privateInteraction(function (args, data, reply) {
+});
+XPBot2.prototype.brag = privateInteraction(function (args, data, reply) {
+});
+XPBot2.prototype.myStats = privateInteraction(function (args, data, reply) {
+});
+XPBot2.prototype.view = privateInteraction(function (args, data, reply) {
+});
+XPBot2.prototype.equipTitle = privateInteraction(function (args, data, reply) {
+});
+XPBot2.prototype.equipItem = privateInteraction(function (args, data, reply) {
+});
+XPBot2.prototype.unequipItem = privateInteraction(function (args, data, reply) {
+});
+XPBot2.prototype.grantSilence = privateInteraction(function (args, data, reply) {
+});
+XPBot2.prototype.revokeSilence = privateInteraction(function (args, data, reply) {
+});
