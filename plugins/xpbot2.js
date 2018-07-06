@@ -1,9 +1,11 @@
 const db = require('../model')();
 
 function XPBot2(fChat, channel) {
-    this.fChat = fChat;
-    this.channel = channel;
+  this.fChat = fChat;
+  this.channel = channel;
 }
+
+module.exports = XPBot2;
 
 function adminOnly(fn) {
     return function (args, data, reply, ...extra) {
