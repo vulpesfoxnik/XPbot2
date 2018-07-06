@@ -1,6 +1,6 @@
 const redis = require("redis");
 const client = redis.createClient(6379, "172.17.0.2");
-const db = require('../model')();
+const db = require('../model');
 const Op = require('sequelize').Op;
 const Promise = require('sequelize').Promise;
 const {scanify} = require("./util");

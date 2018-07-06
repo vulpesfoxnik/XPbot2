@@ -2,7 +2,7 @@
   "host": "localhost",
   "username": null,
   "password": null,
-  "storage": "data/data2.sqlite3",
+  "storage": "../data/data2.sqlite3",
   "dialect": "sqlite",
   "operatorsAliases": false
 }

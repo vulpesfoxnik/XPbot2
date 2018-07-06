@@ -1,22 +1,23 @@
-const Sequelize = require('sequelize');
+"use strict";
+const Sequelize = require("sequelize");
+const fs = require("fs");
+const path = require("path");
 
-module.exports = function(sequelize) {
-    'use strict';
-    if (sequelize === undefined) {
-        const dsn = `sqlite:${__dirname}/../data/data2.sqlite3`;
-        sequelize = new Sequelize(dsn);
+let filename = path.join(__dirname, "..", "settings", "db.json");
+let config = JSON.parse(fs.readFileSync(filename, "utf8"));
+config.storage = config.storage && path.join(path.dirname(filename), config.storage);
+
+const sequelize = new Sequelize('', '', '', config);
+
+sequelize.import('./item');
+sequelize.import('./itemType');
+sequelize.import('./title');
+sequelize.import('./user');
+
+Object.keys(sequelize.models).forEach(modelName => {
+    if (typeof(sequelize.models[modelName].associate) === 'function') {
+        sequelize.models[modelName].associate(sequelize.models);
     }
+});
 
-    sequelize.import('./item');
-    sequelize.import('./itemType');
-    sequelize.import('./title');
-    sequelize.import('./user');
-
-    Object.keys(sequelize.models).forEach(modelName => {
-        if (typeof(sequelize.models[modelName].associate) === 'function') {
-            sequelize.models[modelName].associate(sequelize.models);
-        }
-    });
-
-    return sequelize;
-};
+module.exports = sequelize;

@@ -1,4 +1,4 @@
-const db = require('../model')();
+const db = require('../model');
 
 function XPBot2(fChat, channel) {
   this.fChat = fChat;
