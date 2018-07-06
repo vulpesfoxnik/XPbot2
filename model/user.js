@@ -4,28 +4,21 @@ const {getterSetter, constant, scanify} = require('./util');
 module.exports = function (sequelize, DataTypes) {
     const User = sequelize.define('User', {
         id: {type: DataTypes.INTEGER, primaryKey: true, allowNull: false, field: 'user_id'},
-        identifier: {type: DataTypes.STRING, field: 'identifier', allowNull: false},
-        identifierScan: {type: DataTypes.STRING, field: 'identifier_scan', unique: true, allowNull: false},
+        character: {type: DataTypes.STRING, field: 'character', allowNull: false},
+        characterScan: {type: DataTypes.STRING, field: 'character_scan', unique: true, allowNull: false},
         exp: {type: DataTypes.INTEGER, field: 'exp', defaultValue: 0, allowNull: false},
         gold: {type: DataTypes.INTEGER, field: 'gold', defaultValue: 0, allowNull: false},
         banned: {
             type: DataTypes.BOOLEAN, field: 'banned', allowNull: false,
-            defaultValue: false,
-            // get() {
-            //     return Boolean(this.getDataValue("banned"));
-            // }
+            defaultValue: false
         },
         notices: {
             type: DataTypes.BOOLEAN, field: 'notices', allowNull: false,
-            defaultValue: true,
-            // get() {
-            //     return Boolean(this.getDataValue("notices"));
-            // }
+            defaultValue: true
         },
         password: {
             type: DataTypes.STRING, field: 'password', allowNull: false, defaultValue: ''
         }
-
     }, {
         tableName: 'users',
         timestamps: false
@@ -65,10 +58,10 @@ module.exports = function (sequelize, DataTypes) {
     User.initializeUser = (function () {
         const Item = User.sequelize.models.Item;
         const Title = User.sequelize.models.Title;
-        return (identifier) => {
+        return (character) => {
             return User.create({
-                identifier: identifier,
-                identifierScan: scanify(identifier),
+                character: character,
+                characterScan: scanify(character),
             }).then(savedUser => {
                 let items = Item.findAll({where: {id: {[Op.in]: [0,4]}}});
                 let titles = Title.findAll({where: {id: 0}});
@@ -84,16 +77,16 @@ module.exports = function (sequelize, DataTypes) {
     }());
 
     Object.defineProperties(User, {
-        banById: constant((id) => {
-            return User.find({identifierScan: scanify(id)}).then(user => {
+        banByCharacter: constant((id) => {
+            return User.find({characterScan: scanify(id)}).then(user => {
                 if (!user)
                     return Promise.reject(null);
                 user.banned = true;
                 return user.save();
             });
         }),
-        unbanById: constant((id) => {
-            return User.find({identifierScan: scanify(id)}).then(user => {
+        unbanByCharacter: constant((id) => {
+            return User.find({characterScan: scanify(id)}).then(user => {
                 if (!user)
                     return Promise.reject(null);
                 user.banned = false;
@@ -104,7 +97,7 @@ module.exports = function (sequelize, DataTypes) {
 
     Object.defineProperties(User.prototype, {
         userCode: getterSetter(function() {
-            return `[user]${this.identifier}[/user]`;
+            return `[user]${this.character}[/user]`;
         }),
     });
 

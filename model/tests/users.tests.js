@@ -6,7 +6,7 @@ const Title = db.models.Title;
 db.sync().then(() => {
     return User.initializeUser("ABCDEK");
 }).then(user => {
-    console.log(user.userCode)
+    console.log(user.userCode);
     return user;
 }).catch(err => console.error(err));
 

@@ -18,7 +18,7 @@ const legacyUserKeys = {
     equippedItems: "wornItems",
     notices: "notices",
     banned: "banned",
-    identifier: "character"
+    character: "character"
 };
 
 function iLookup(obj, key) {
@@ -95,17 +95,17 @@ const crawlResults = (scanResult) => {
             }, redisMap);
             if (!users || users.length < 1) return Promise.resolve(null);
             const normalizedUsers = users.map(u => u.user).filter(u => Boolean(iLookup(u, legacyUserKeys.equippedTitle))).map(user => {
-                const id = scanify(String(iLookup(user, legacyUserKeys.identifier)));
+                const id = scanify(String(iLookup(user, legacyUserKeys.character)));
                 return {
                     id: id,
                     model: {
-                        identifier: String(iLookup(user, legacyUserKeys.identifier)),
-                        identifierScan: id,
+                        character: String(iLookup(user, legacyUserKeys.character)),
+                        characterScan: id,
                         gold: (SafeNumber(iLookup(user, legacyUserKeys.gold)) || 0),
                         exp: (SafeNumber(iLookup(user, legacyUserKeys.exp)) || 0),
                         banned: iBooleanLookup(user, legacyUserKeys.banned),
                         notices: iBooleanLookup(user, legacyUserKeys.notices),
-                        password: crypto.randomBytes(16).toString('base64'),
+                        password: generatePassword(id),
                     },
                     additionalProperties: {
                         ownedItemIds: (iLookup(user, legacyUserKeys.ownedItems) || "0,4").split(",").map(SafeNumber),
@@ -118,9 +118,9 @@ const crawlResults = (scanResult) => {
 
             if (!normalizedUsers || normalizedUsers.length < 1) return Promise.resolve(null);
             return User.bulkCreate(normalizedUsers.map(u => u.model))
-                .then(() => User.findAll({where: {identifierScan: {[Op.in]: normalizedUsers.map(u => u.id)}}}))
+                .then(() => User.findAll({where: {characterScan: {[Op.in]: normalizedUsers.map(u => u.id)}}}))
                 .then(models => models && Promise.all(models.map(user => {
-                    const props = normalizedUsers.find(u => u.id === user.identifierScan).additionalProperties;
+                    const props = normalizedUsers.find(u => u.id === user.characterScan).additionalProperties;
                     user.setOwnedItems(cache.items.filter(i => props.ownedItemIds.includes(i.id)));
                     user.setEquippedItems(cache.items.filter(i => props.equippedItemIds.includes(i.id)));
                     user.setOwnedTitles(cache.titles.filter(i => props.ownedTitleIds.includes(i.id)));
