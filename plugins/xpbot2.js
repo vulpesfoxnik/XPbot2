@@ -1,8 +1,11 @@
 const db = require('../model');
+const User = db.models.User;
+const Item = db.models.Item;
+const Title = db.models.Title;
 
 function XPBot2(fChat, channel) {
-  this.fChat = fChat;
-  this.channel = channel;
+    this.fChat = fChat;
+    this.channel = channel;
 }
 
 module.exports = XPBot2;
@@ -23,8 +26,39 @@ function privateInteraction(fn) {
     };
 }
 
+/**
+ *
+ * @param {User} user
+ */
+function describeUser(user) {
+    const equippedTitle = (user.equippedTitle && user.equippedTitle[0].titleView) || "(no-title)";
+    const equippedItems = (user.equippedItems || []).map(item => `"${item.titleView}"`).join(", ");
+    const ownedTitles = (user.ownedTitles || []).map(item => `"${item.titleView}"`).join(", ");
+    const ownedItems = (user.ownedItems || []).map(item => `"${item.titleView}"`).join(", ");
+    return `${equippedTitle} ${user.character} has ${user.gold} gold, and ${user.exp} exp, wearing ${equippedItems}.
+    They own the following items: ${ownedItems}.
+    They own the following titles: ${ownedTitles}.`
+}
+
 // === Admin
-XPBot2.prototype.browse = privateInteraction(adminOnly(function (args, data, reply) {
+XPBot2.prototype.browse = privateInteraction(adminOnly(function browse(args, data, reply) {
+    const argumentParser = /^(\d+)(?:\s+([1-9]?[1-9]|100))?$/;
+    const matches = argumentParser.exec(args);
+    if (!matches) {
+        reply(`I apologize master, I'm unsure what to fetch for you. I understand it more like this:
+    To browse all users, say:
+    !browse page
+    !browse page 1-100`);
+        return Promise.resolve(undefined);
+    }
+    let [, pageNumber, perPage] = matches;
+    pageNumber = Number(pageNumber);
+    perPage = Number(perPage || 20);
+    return User.scope("allData").findAll({limit: perPage, offset: pageNumber * perPage}).then(users => {
+        reply(`*** Page ${pageNumber + 1} ***\n${users.map(describeUser).join("\n")}`);
+    }).catch(err => {
+        reply("Sorry master, something went wrong when I was fetching your request.");
+    });
 }));
 XPBot2.prototype.ban = XPBot2.prototype.banUser = privateInteraction(adminOnly(function banUser(args, data, reply) {
     const argRegex1 = /^"([^"]+)"$/;
@@ -38,7 +72,7 @@ XPBot2.prototype.ban = XPBot2.prototype.banUser = privateInteraction(adminOnly(f
         return Promise.resolve();
     }
     const name = parsedArgs[1];
-    return db.models.User.banByCharacter(name).then(user => {
+    return User.banByCharacter(name).then(user => {
         reply(`Master, ${user.userCode} has been banished from the realm!`);
         return user;
     }, (reject) => {

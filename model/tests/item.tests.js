@@ -1,8 +1,8 @@
-const db = require('../../model')();
+const db = require('../../model');
 
-db.models.Item.scope('purchasable').findAll({
+db.models.Item.scope("purchasable").findAll({
     include: [
-        {model: db.models.ItemType, as: 'type'}
+        {model: db.models.ItemType, as: "type"}
     ],
 }).then((result) => {
     console.log(JSON.stringify(result[1], null, 2));

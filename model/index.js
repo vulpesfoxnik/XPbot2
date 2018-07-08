@@ -9,14 +9,19 @@ config.storage = config.storage && path.join(path.dirname(filename), config.stor
 
 const sequelize = new Sequelize(config);
 
-sequelize.import('./item');
-sequelize.import('./itemType');
-sequelize.import('./title');
-sequelize.import('./user');
+sequelize.import("./item");
+sequelize.import("./itemType");
+sequelize.import("./title");
+sequelize.import("./user");
 
 Object.keys(sequelize.models).forEach(modelName => {
-    if (typeof(sequelize.models[modelName].associate) === 'function') {
-        sequelize.models[modelName].associate(sequelize.models);
+    const model = sequelize.models[modelName];
+    if (typeof(model.associate) === "function") {
+        model.associate(sequelize.models);
+    }
+
+    if (typeof(model.associateScopes) === "function") {
+        model.associateScopes(sequelize.models);
     }
 });
 
