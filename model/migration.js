@@ -1,13 +1,20 @@
+"use strict";
+/**
+ * Purpose: migrate all user-like objects that XP-bot had made in version 1 to a proper SQL database (sqlite for now)
+ * This way we can avoid any lingering issues related to the poor redis setup.
+ * Likely we need to inform the admin to send back the redis_archive.json and the logs to allow us to determine if
+ * everything went smoothly
+ */
 const redis = require("redis");
 const client = redis.createClient(6379, "172.17.0.2");
 const db = require('../model');
-const Op = require('sequelize').Op;
-const Promise = require('sequelize').Promise;
+const {Op, Promise} = require("sequelize");
 const {scanify} = require("./util");
-const crypto = require('crypto');
-const fs = require('fs');
-const path = require('path');
-const {performance} = require('perf_hooks');
+const crypto = require("crypto");
+const fs = require("fs");
+const path = require("path");
+const {performance} = require("perf_hooks");
+const logger = require("../util/logger").loggers.get("application");
 
 const legacyUserKeys = {
     gold: "gold",
@@ -81,13 +88,13 @@ function timeConversion(millisec) {
     const days = (millisec / (1000 * 60 * 60 * 24)).toFixed(1);
 
     if (seconds < 60) {
-        return seconds + " Sec";
+        return seconds + " seconds";
     } else if (minutes < 60) {
-        return minutes + " Min";
+        return minutes + " minutes";
     } else if (hours < 24) {
-        return hours + " Hrs";
+        return hours + " hours";
     } else {
-        return days + " Days"
+        return days + " days"
     }
 }
 
@@ -102,10 +109,11 @@ const archivePath = path.join(__dirname, "archived_redis.json");
 const redisMap = {};
 
 const crawlResults = (scanResult) => {
+    // TODO: Revisit as a loop making a large Promise that executes all of the items as fast as possible.
     const nextCursor = scanResult[0];
     const keys = scanResult[1];
     crawlResults.count += 1;
-    console.log(`Search #${crawlResults.count}, found ${keys.length} keys.`);
+    logger.info(`Search #${crawlResults.count}, found ${keys.length} keys.`);
     return Promise.all(keys.map(keyIsOfType))
         .then(typedKeys => Promise.all(typedKeys.filter(k => k.type === "hash").map(k => getRedisUser(k.key)
             .then(u => ({key: k.key, user: u})))/*endMap*/))
@@ -154,13 +162,19 @@ const crawlResults = (scanResult) => {
 };
 crawlResults.count = 0;
 
-console.log("Migrating...");
 const start = performance.now();
-Promise.all([Item.findAll(), Title.findAll()])
+db.authenticate()
+    .then(() => User.count())
+    .then(count => count > 0 ? Promise.reject("Database already migrated.") : Promise.resolve())
+    .then(() => Promise.all([Item.findAll(), Title.findAll()]))
     .then(results => {
         cache.items = results[0];
         cache.titles = results[1];
         return 0;
+    })
+    .then(zero => {
+        logger.info("Migrating...");
+        return zero;
     })
     .then(scan)
     .then(crawlResults)
@@ -169,13 +183,13 @@ Promise.all([Item.findAll(), Title.findAll()])
         return Promise.resolve(true);
     })
     .then(() => {
-        console.log("Complete!");
+        logger.info("Complete!");
         const stop = performance.now();
-        console.log(`Time taken: ${timeConversion(stop - start)}`);
+        logger.info(`Time taken: ${timeConversion(stop - start)}`);
         return Promise.resolve(true);
     })
     .then(() => process.exit(0))
     .catch(err => {
-        console.log(err);
+        logger.error(err);
         process.exit(-1);
     });

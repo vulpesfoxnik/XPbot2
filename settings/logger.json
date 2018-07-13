@@ -1,0 +1,29 @@
+{
+  "application": {
+    "transports": [
+      {
+        "type": "console",
+        "parameters": {
+          "level": "info"
+        }
+      },
+      {
+        "type": "file",
+        "parameters": {
+          "level": "debug",
+          "filename": "app.log"
+        }
+      }
+    ]
+  },
+  "web": {
+    "transports": [
+      {
+        "type": "file",
+        "parameters": {
+          "filename": "combined.log"
+        }
+      }
+    ]
+  }
+}

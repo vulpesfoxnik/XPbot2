@@ -19,19 +19,21 @@ function browse(args, data, reply = replyFn) {
     let [, pageNumber, perPage] = matches;
     pageNumber = Number(pageNumber) <= 0 ? 1 : Number(pageNumber);
     perPage = Number(perPage || 10);
-    return User.scope("allData").findAndCountAll({limit: perPage, offset: (pageNumber - 1) * perPage}).then(users => {
-        reply(`*** Page ${pageNumber} of ${(users.count / perPage).toFixed(0)} ***\n${users.rows.map(function describeUser(user) {
-            const equippedTitle = (user.equippedTitle && user.equippedTitle[0] && user.equippedTitle[0].titleView) || "(no-title)";
-            const equippedItems = (user.equippedItems || []).map(item => `"${item.titleView}"`).join(", ");
-            const ownedTitles = (user.ownedTitles || []).map(item => `"${item.titleView}"`).join(", ");
-            const ownedItems = (user.ownedItems || []).map(item => `"${item.titleView}"`).join(", ");
-            return `${equippedTitle} ${user.character} has ${user.gold} gold, and ${user.exp} exp, wearing ${equippedItems}.
+    return User.count().then(count => {
+        return User.scope("allData").findAll({limit: perPage, offset: (pageNumber - 1) * perPage}).then(users => {
+            reply(`*** Page ${pageNumber} of ${(count / perPage).toFixed(0)} ***\n${users.map(function describeUser(user) {
+                const equippedTitle = (user.equippedTitle && user.equippedTitle[0] && user.equippedTitle[0].titleView) || "(no-title)";
+                const equippedItems = (user.equippedItems || []).map(item => `"${item.titleView}"`).join(", ");
+                const ownedTitles = (user.ownedTitles || []).map(item => `"${item.titleView}"`).join(", ");
+                const ownedItems = (user.ownedItems || []).map(item => `"${item.titleView}"`).join(", ");
+                return `${equippedTitle} ${user.character} has ${user.gold} gold, and ${user.exp} exp, wearing ${equippedItems}.
     They own the following items: ${ownedItems}.
     They own the following titles: ${ownedTitles}.`
-        }).join("\n")}`);
-    }).catch(err => {
-        reply("Sorry master, something went wrong when I was fetching your request.");
-        console.error(err);
+            }).join("\n")}`);
+        }).catch(err => {
+            reply("Sorry master, something went wrong when I was fetching your request.");
+            console.error(err);
+        });
     });
 }
 

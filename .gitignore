@@ -116,3 +116,6 @@ fabric.properties
 
 # Private passwords and keys
 setting.json
+app.log
+combined.log
+model/archived_redis.json

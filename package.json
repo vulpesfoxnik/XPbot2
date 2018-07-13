@@ -12,7 +12,8 @@
     "jsonfile": "2.3.*",
     "redis": "2.8.*",
     "sequelize": "^4.37.10",
-    "sqlite3": "^4.0.1"
+    "sqlite3": "^4.0.1",
+    "winston": "^3.0.0"
   },
   "devDependencies": {
     "faker": "^4.1.0"
