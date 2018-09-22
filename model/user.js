@@ -71,21 +71,26 @@ module.exports = function (sequelize, DataTypes) {
         const Item = User.sequelize.models.Item;
         const Title = User.sequelize.models.Title;
         return (character) => {
-            return User.create({
-                character: character,
-                characterScan: scanify(character),
-            }).then(savedUser => {
-                let items = Item.findAll({where: {id: {[Op.in]: [0, 4]}}});
-                let titles = Title.findAll({where: {id: 0}});
-                return Promise.all([items, titles]).then(results => {
-                    return Promise.all([
-                        savedUser.setOwnedTitles(results[1]),
-                        savedUser.setEquippedTitle(results[1]),
-                        savedUser.setOwnedItems(results[0]),
-                        savedUser.setEquippedItems(results[0]),
-                    ]).then(() => savedUser.save());
+            return User.exists(character)
+                .then(
+                    () => {}, // Exists, do nothing
+                    () => { // Create new user
+                    return User.create({
+                        character: character,
+                        characterScan: scanify(character),
+                    }).then(savedUser => {
+                        let items = Item.findAll({where: {id: {[Op.in]: [0, 4]}}});
+                        let titles = Title.findAll({where: {id: 0}});
+                        return Promise.all([items, titles]).then(results => {
+                            return Promise.all([
+                                savedUser.setOwnedTitles(results[1]),
+                                savedUser.setEquippedTitle(results[1]),
+                                savedUser.setOwnedItems(results[0]),
+                                savedUser.setEquippedItems(results[0]),
+                            ]).then(() => savedUser.save());
+                        });
+                    });
                 });
-            });
         };
     }());
 
@@ -105,6 +110,10 @@ module.exports = function (sequelize, DataTypes) {
                 user.banned = false;
                 return user.save();
             });
+        }),
+        exists: constant(id => {
+            return User.count({characterScan: scanify(id)})
+                .then(count => count > 0 ? Promise.resolve(true) : Promise.reject(false));
         }),
     });
 

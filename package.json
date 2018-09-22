@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "start": "node app.js",
+    "initialize-db": "node model/initialize.js",
     "migrate": "node model/migration.js"
   },
   "dependencies": {
