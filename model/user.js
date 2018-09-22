@@ -110,6 +110,9 @@ module.exports = function (sequelize, DataTypes) {
             return User.count({characterScan: scanify(id)})
                 .then(count => count > 0 ? Promise.resolve(true) : Promise.reject(false));
         }),
+        findByName: constant(id => {
+            return User.find({characterScan: scanify(id)});
+        })
     });
 
     Object.defineProperties(User.prototype, {
