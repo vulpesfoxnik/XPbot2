@@ -1,4 +1,5 @@
 const Op = require('sequelize').Op;
+const {user:userBBC, icon: iconBBC} = require('../utility/b-b-code')
 const {getterSetter, constant, scanify} = require('./util');
 
 module.exports = function (sequelize, DataTypes) {
@@ -116,9 +117,12 @@ module.exports = function (sequelize, DataTypes) {
     });
 
     Object.defineProperties(User.prototype, {
-        userCode: getterSetter(function () {
-            return `[user]${this.character}[/user]`;
+        bbcUser: getterSetter(function () {
+            return userBBC(this.character);
         }),
+        bbcIcon: getterSetter(function () {
+          return iconBBC(this.character)
+        })
     });
 
     return User;
