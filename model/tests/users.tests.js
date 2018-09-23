@@ -37,9 +37,13 @@ function browse(args, data, reply = replyFn) {
     });
 }
 
-browse("0 2")
-    .then(r => browse("2 2"))
-    .then(r => browse("d"))
-    .then(r => browse("400"))
-    .then(r => browse("401"))
-;
+User.findAll({limit: 1}).then(user => {
+    User.findAll({offset: 29, limit: 1}).then(user2 => {
+        console.log(`Before: ${user2[0].exp}`);
+        return user[0].copyTo(user2[0]);
+    })
+        // .then(user2 => User.find({where: {id: user2.id}}))
+        .then(user2 => {
+            console.log(`After: ${user2.exp}`);
+        });
+});

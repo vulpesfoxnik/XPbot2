@@ -89,11 +89,8 @@ XPBot2PO.browse = privateInteraction(adminOnly(function browse(args, data, reply
         return Promise.resolve(undefined);
     }
     let [, pageNumber, perPage] = matches;
-    pageNumber = Number(pageNumber) <= 0 ? 1 : Number(pageNumber);
-    perPage = Number(perPage || 5);
-    return User.count().then(count => {
-        return User.scope("allData").findAll({limit: perPage, offset: (pageNumber - 1) * perPage}).then(users => {
-            reply(`*** Page ${pageNumber} of ${(count / perPage).toFixed(0)} ***\n${users.map(function describeUser(user) {
+    return User.pagination(pageNumber, perPage).then(page => {
+            reply(`*** Page ${page.number} of ${page.total} ***\n${page.data.map(function describeUser(user) {
                 const equippedTitle = (user.equippedTitle && user.equippedTitle[0] && user.equippedTitle[0].titleView) || "(no-title)";
                 const equippedItems = (user.equippedItems || []).map(item => `"${item.titleView}"`).join(", ");
                 const ownedTitles = (user.ownedTitles || []).map(item => `"${item.titleView}"`).join(", ");
@@ -106,7 +103,6 @@ XPBot2PO.browse = privateInteraction(adminOnly(function browse(args, data, reply
             reply("Sorry master, something went wrong when I was fetching your request.");
             console.error(err);
         });
-    });
 }));
 XPBot2PO.ban = XPBot2PO.banUser = privateInteraction(adminOnly(function banUser(args, data, reply) {
     const argRegex1 = /^"([^"]+)"$/;

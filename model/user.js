@@ -1,8 +1,29 @@
 const Op = require('sequelize').Op;
-const {user:userBBC, icon: iconBBC} = require('../utility/b-b-code')
+const {user: userBBC, icon: iconBBC} = require('../utility/b-b-code')
 const {getterSetter, constant, scanify} = require('./util');
 
 module.exports = function (sequelize, DataTypes) {
+    /**
+     * @typedef {Object} User
+     * @property {number} id
+     * @property {string} character
+     * @property {string} characterScan
+     * @property {number} exp
+     * @property {number} gold
+     * @property {boolean} banned
+     * @property {boolean} notices
+     * @property {string} password
+     * @property {function(...Item)} setEquippedItems
+     * @property {function} getEquippedItems
+     * @property {function(...Item)} setOwnedItems
+     * @property {function} getOwnedItems
+     * @property {function(...Title)} setOwnedTitles,
+     * @property {function} getOwnedTitles,
+     * @property {function(...Title)} setEquippedTitle,
+     * @property {function} getEquippedTitle,
+     * @property {function} save
+     * @property {function(number, number)} pagination
+     */
     const User = sequelize.define("User", {
         id: {type: DataTypes.INTEGER, primaryKey: true, allowNull: false, field: "user_id"},
         character: {type: DataTypes.STRING, field: "character", allowNull: false},
@@ -75,7 +96,7 @@ module.exports = function (sequelize, DataTypes) {
             return User.create({
                 character: character,
                 characterScan: scanify(character),
-            }).then(savedUser => {
+            }).then(/** @param {User} savedUser */savedUser => {
                 let items = Item.findAll({where: {id: {[Op.in]: [0, 4]}}});
                 let titles = Title.findAll({where: {id: 0}});
                 return Promise.all([items, titles]).then(results => {
@@ -113,7 +134,25 @@ module.exports = function (sequelize, DataTypes) {
         }),
         findByName: constant(id => {
             return User.find({characterScan: scanify(id)});
-        })
+        }),
+        pagination: constant((pageNumber, perPage = 10) => {
+            pageNumber = Number(pageNumber) <= 0 ? 1 : Number(pageNumber);
+            perPage = Number(perPage || 5);
+
+            return User.count().then(count => {
+                return User.scopes('allData').findAll({limit: perPage, offset: (pageNumber - 1) * perPage})
+                    .then(users => {
+                        return {
+                            totalPages: Math.ceil(count/perPage),
+                            page: pageNumber,
+                            perPage: perPage,
+                            next: () => User.pagination(pageNumber + 1, perPage),
+                            previous: () => User.pagination(pageNumber - 1, perPage),
+                            data: users
+                        };
+                    });
+            });
+        }),
     });
 
     Object.defineProperties(User.prototype, {
@@ -121,8 +160,37 @@ module.exports = function (sequelize, DataTypes) {
             return userBBC(this.character);
         }),
         bbcIcon: getterSetter(function () {
-          return iconBBC(this.character)
-        })
+            return iconBBC(this.character);
+        }),
+        copyTo: constant(function (target) {
+            /** @type {User} src */
+            let src = this;
+            return (
+                new Promise((resolve, reject) => ((target instanceof User) ? reject(false) : resolve(true))))
+                .then(() => User.findByName(String(target)), () => target)
+                .then(/** @param {User} dest */dest => {
+                    if (!dest) throw new Error("Invalid destination user.");
+
+                    return Promise.all([
+                        src.getOwnedItems(),
+                        src.getEquippedItems(),
+                        src.getOwnedTitles(),
+                        src.getEquippedTitle(),
+                    ])
+                        .then(srcItems => {
+                            dest.exp = src.exp;
+                            dest.gold = src.gold;
+                            dest.notices = src.notices;
+                            dest.banned = src.banned;
+                            return dest.save().then(dest => Promise.all([
+                                dest.setOwnedItems(srcItems[0]),
+                                dest.setEquippedItems(srcItems[1]),
+                                dest.setOwnedTitles(srcItems[2]),
+                                dest.setEquippedTitle(srcItems[3]),
+                            ])).then(() => User.find({where:{id: dest.id}}));
+                        });
+                });
+        }),
     });
 
     return User;
