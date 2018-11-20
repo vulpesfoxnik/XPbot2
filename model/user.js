@@ -25,9 +25,23 @@ module.exports = function (sequelize, DataTypes) {
      * @property {function(number, number)} pagination
      */
     const User = sequelize.define("User", {
-        id: {type: DataTypes.INTEGER, primaryKey: true, allowNull: false, field: "user_id"},
-        character: {type: DataTypes.STRING, field: "character", allowNull: false},
-        characterScan: {type: DataTypes.STRING, field: "character_scan", unique: true, allowNull: false},
+        id: {type: DataTypes.INTEGER, primaryKey: true, allowNull: true, field: "user_id"},
+        character: {
+            type: DataTypes.STRING, field: "character", allowNull: false,
+            set(value) {
+                if (value !== this.getDataValue("character")) {
+                    this.setDataValue("character", value);
+                    this.setDataValue("characterScan", scanify(value));
+                }
+            }
+        },
+        characterScan: {
+            type: DataTypes.STRING, field: "character_scan", unique: true, allowNull: false,
+            set(value) {
+                throw new Error("characterScan cannot be set directly. " +
+                    "It can be changed by setting the character property.")
+            }
+        },
         exp: {type: DataTypes.INTEGER, field: "exp", defaultValue: 0, allowNull: false},
         gold: {type: DataTypes.INTEGER, field: "gold", defaultValue: 0, allowNull: false},
         banned: {
@@ -89,69 +103,59 @@ module.exports = function (sequelize, DataTypes) {
         });
     };
 
-    User.initializeUser = (function () {
-        const Item = User.sequelize.models.Item;
-        const Title = User.sequelize.models.Title;
-        return (character) => {
-            return User.create({
-                character: character,
-                characterScan: scanify(character),
-            }).then(/** @param {User} savedUser */savedUser => {
-                let items = Item.findAll({where: {id: {[Op.in]: [0, 4]}}});
-                let titles = Title.findAll({where: {id: 0}});
-                return Promise.all([items, titles]).then(results => {
-                    return Promise.all([
-                        savedUser.setOwnedTitles(results[1]),
-                        savedUser.setEquippedTitle(results[1]),
-                        savedUser.setOwnedItems(results[0]),
-                        savedUser.setEquippedItems(results[0]),
-                    ]).then(() => savedUser.save());
-                });
-            });
-        };
-    }());
-
+    const Item = User.sequelize.models.Item;
+    const Title = User.sequelize.models.Title;
     Object.defineProperties(User, {
-        banByCharacter: constant((id) => {
-            return User.find({characterScan: scanify(id)}).then(user => {
-                if (!user)
-                    return Promise.reject(null);
-                user.banned = true;
-                return user.save();
+        findByName: constant(async (name, rejectOnEmpty = true) => {
+            return await User.find({where: {characterScan: scanify(name)}, rejectOnEmpty: rejectOnEmpty});
+        }),
+        banByName: constant(async name => {
+            let user = await User.findByName(name);
+            user.banned = true;
+            return user.save();
+        }),
+        unbanByName: constant(async name => {
+            let user = await User.findByName(name);
+            user.banned = false;
+            return user.save();
+        }),
+        exists: constant(async name => {
+            return (await User.findByName(name, false)) > 0;
+        }),
+        initialize: constant(async function (name) {
+            let savedUser = await User.create({
+                character: name
             });
-        }),
-        unbanByCharacter: constant((id) => {
-            return User.find({characterScan: scanify(id)}).then(user => {
-                if (!user)
-                    return Promise.reject(null);
-                user.banned = false;
-                return user.save();
-            });
-        }),
-        exists: constant(id => {
-            return User.count({characterScan: scanify(id)})
-                .then(count => count > 0 ? Promise.resolve(true) : Promise.reject(false));
-        }),
-        findByName: constant(id => {
-            return User.find({characterScan: scanify(id)});
-        }),
-        pagination: constant((pageNumber, perPage = 10) => {
-            pageNumber = Number(pageNumber) <= 0 ? 1 : Number(pageNumber);
-            perPage = Number(perPage || 5);
+            await savedUser.reload({where:{characterScan:scanify(name)}});
 
-            return User.count().then(count => {
-                return User.scopes('allData').findAll({limit: perPage, offset: (pageNumber - 1) * perPage})
-                    .then(users => {
-                        return {
-                            totalPages: Math.ceil(count/perPage),
-                            page: pageNumber,
-                            perPage: perPage,
-                            next: () => User.pagination(pageNumber + 1, perPage),
-                            previous: () => User.pagination(pageNumber - 1, perPage),
-                            data: users
-                        };
-                    });
-            });
+            let [items, titles] = await Promise.all([
+                Item.findAll({where: {id: {[Op.in]: [0, 4]}}})
+                , Title.findAll({where: {id: 0}})
+            ]);
+
+            await Promise.all([
+                savedUser.setOwnedTitles(titles)
+                , savedUser.setEquippedTitle(titles)
+                , savedUser.setOwnedItems(items)
+                , savedUser.setEquippedItems(items)
+            ]);
+            return await savedUser.save();
+        }),
+        pagination: constant(async (pageNumber, perPage = 10) => {
+            pageNumber = Math.max(Number(pageNumber), 1);
+            perPage = Math.max(Number(perPage), 10);
+
+            let totalCount = await User.count();
+            let users = await User.scopes('allData').findAll({limit: perPage, offset: (pageNumber - 1) * perPage});
+            return {
+                totalPages: Math.ceil(totalCount / perPage)
+                , page: pageNumber
+                , perPage: perPage
+                , data: users
+            };
+        }),
+        destroyByName: constant(async name => {
+            return User.destroy({where:{characterScan: scanify(name)}});
         }),
     });
 
@@ -162,36 +166,39 @@ module.exports = function (sequelize, DataTypes) {
         bbcIcon: getterSetter(function () {
             return iconBBC(this.character);
         }),
-        copyTo: constant(function (target) {
+        copyTo: constant(async function (target) {
             /** @type {User} src */
             let src = this;
-            return (
-                new Promise((resolve, reject) => ((target instanceof User) ? reject(false) : resolve(true))))
-                .then(() => User.findByName(String(target)), () => target)
-                .then(/** @param {User} dest */dest => {
-                    if (!dest) throw new Error("Invalid destination user.");
+            let dest;
+            if (!(target instanceof User)) {
+                dest = await User.findByName(String(target));
+            } else {
+                dest = target;
+            }
 
-                    return Promise.all([
-                        src.getOwnedItems(),
-                        src.getEquippedItems(),
-                        src.getOwnedTitles(),
-                        src.getEquippedTitle(),
-                    ])
-                        .then(srcItems => {
-                            dest.exp = src.exp;
-                            dest.gold = src.gold;
-                            dest.notices = src.notices;
-                            dest.banned = src.banned;
-                            return dest.save().then(dest => Promise.all([
-                                dest.setOwnedItems(srcItems[0]),
-                                dest.setEquippedItems(srcItems[1]),
-                                dest.setOwnedTitles(srcItems[2]),
-                                dest.setEquippedTitle(srcItems[3]),
-                            ])).then(() => User.find({where:{id: dest.id}}));
-                        });
-                });
+            let [items, equippedItems, titles, equippedTitles] = await Promise.all([
+                src.getOwnedItems()
+                , src.getEquippedItems()
+                , src.getOwnedTitles()
+                , src.getEquippedTitle()
+            ]);
+
+            dest.exp = src.exp;
+            dest.gold = src.gold;
+            dest.notices = src.notices;
+            dest.banned = src.banned;
+            await dest.save();
+            await Promise.all([
+                dest.setOwnedItems(items)
+                , dest.setEquippedItems(equippedItems)
+                , dest.setOwnedTitles(titles)
+                , dest.setEquippedTitle(equippedTitles)
+            ]);
+            return await dest.reload();
         }),
+
     });
 
     return User;
-};
+}
+;

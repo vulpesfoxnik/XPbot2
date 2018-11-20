@@ -116,7 +116,7 @@ XPBot2PO.ban = XPBot2PO.banUser = privateInteraction(adminOnly(function banUser(
         return Promise.resolve();
     }
     const name = parsedArgs[1];
-    return User.banByCharacter(name).then(user => {
+    return User.banByName(name).then(user => {
         reply(`Master, ${user.userCode} has been banished from the realm!`);
         return user;
     }, (reject) => {
