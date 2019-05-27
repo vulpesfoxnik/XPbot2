@@ -1,4 +1,5 @@
 const Op = require('sequelize').Op;
+const Model = require('sequelize').Model;
 const {user: userBBC, icon: iconBBC} = require('../utility/b-b-code')
 const {getterSetter, constant, scanify} = require('./util');
 
@@ -23,6 +24,8 @@ module.exports = function (sequelize, DataTypes) {
      * @property {function} getEquippedTitle,
      * @property {function} save
      * @property {function(number, number)} pagination
+     *
+     * @type {Model} User
      */
     const User = sequelize.define("User", {
         id: {type: DataTypes.INTEGER, primaryKey: true, allowNull: false, field: "user_id"},
@@ -89,69 +92,56 @@ module.exports = function (sequelize, DataTypes) {
         });
     };
 
-    User.initializeUser = (function () {
-        const Item = User.sequelize.models.Item;
-        const Title = User.sequelize.models.Title;
-        return (character) => {
-            return User.create({
+    const Item = User.sequelize.models.Item;
+    const Title = User.sequelize.models.Title;
+    Object.defineProperties(User, {
+        initializeUser: constant(async function _initializeUser(character) {
+            /** @type {User} user */
+            let user = await User.create({
                 character: character,
                 characterScan: scanify(character),
-            }).then(/** @param {User} savedUser */savedUser => {
-                let items = Item.findAll({where: {id: {[Op.in]: [0, 4]}}});
-                let titles = Title.findAll({where: {id: 0}});
-                return Promise.all([items, titles]).then(results => {
-                    return Promise.all([
-                        savedUser.setOwnedTitles(results[1]),
-                        savedUser.setEquippedTitle(results[1]),
-                        savedUser.setOwnedItems(results[0]),
-                        savedUser.setEquippedItems(results[0]),
-                    ]).then(() => savedUser.save());
-                });
             });
-        };
-    }());
+            let baseItems = await Item.findAll({where: {id: {[Op.in]: [0, 4]}}});
+            let baseTitle = await Title.findAll({where: {id: 0}});
 
-    Object.defineProperties(User, {
-        banByCharacter: constant((id) => {
-            return User.find({characterScan: scanify(id)}).then(user => {
-                if (!user)
-                    return Promise.reject(null);
-                user.banned = true;
-                return user.save();
-            });
+            await Promise.all([
+                user.setOwnedTitles(baseTitle),
+                user.setEquippedTitle(baseTitle),
+                user.setOwnedItems(baseItems),
+                user.setEquippedItems(baseItems),
+            ]);
+            return await user.save();
         }),
-        unbanByCharacter: constant((id) => {
-            return User.find({characterScan: scanify(id)}).then(user => {
-                if (!user)
-                    return Promise.reject(null);
-                user.banned = false;
-                return user.save();
-            });
+        banByCharacter: constant(async character => {
+            let user = await User.find({where: {characterScan: scanify(character)}, rejectOnEmpty: true});
+            user.banned = true;
+            return await user.save();
         }),
-        exists: constant(id => {
-            return User.count({characterScan: scanify(id)})
-                .then(count => count > 0 ? Promise.resolve(true) : Promise.reject(false));
+        unbanByCharacter: constant(async character => {
+            let user = User.find({where: {characterScan: scanify(character)}, rejectOnEmpty: true})
+            user.banned = false;
+            return user.save();
         }),
-        findByName: constant(id => {
-            return User.find({characterScan: scanify(id)});
+        exists: constant(async character => {
+            return await User.count({where: {characterScan: scanify(character)}}) > 0;
         }),
-        pagination: constant((pageNumber, perPage = 10) => {
+        findByIdentifier: constant(async id => {
+            return await User.findById(id, {rejectOnEmpty: true})
+        }),
+        findByName: constant(async id => {
+            return await User.find({where: {characterScan: scanify(id)}, rejectOnEmpty: true});
+        }),
+        pagination: constant(async function (pageNumber, perPage = 10) {
             pageNumber = Number(pageNumber) <= 0 ? 1 : Number(pageNumber);
             perPage = Number(perPage || 5);
-
-            return User.count().then(count => {
-                return User.scopes('allData').findAll({limit: perPage, offset: (pageNumber - 1) * perPage})
-                    .then(users => {
-                        return {
-                            totalPages: Math.ceil(count/perPage),
-                            page: pageNumber,
-                            perPage: perPage,
-                            next: () => User.pagination(pageNumber + 1, perPage),
-                            previous: () => User.pagination(pageNumber - 1, perPage),
-                            data: users
-                        };
-                    });
-            });
+            let totalCount = await User.count();
+            let users = await User.scopes('allData').findAll({limit: perPage, offset: (pageNumber - 1) * perPage});
+            return {
+                totalPages: Math.ceil(totalCount / perPage),
+                page: pageNumber,
+                perPage: perPage,
+                data: users
+            };
         }),
     });
 
@@ -162,36 +152,38 @@ module.exports = function (sequelize, DataTypes) {
         bbcIcon: getterSetter(function () {
             return iconBBC(this.character);
         }),
-        copyTo: constant(function (target) {
+        copyTo: constant(async function (targetUser) {
             /** @type {User} src */
-            let src = this;
-            return (
-                new Promise((resolve, reject) => ((target instanceof User) ? reject(false) : resolve(true))))
-                .then(() => User.findByName(String(target)), () => target)
-                .then(/** @param {User} dest */dest => {
-                    if (!dest) throw new Error("Invalid destination user.");
+            let srcUser = this;
+            if (!(targetUser instanceof User)) {
+                try {
+                    targetUser = await User.findByName(String(target));
+                } catch (e) {
+                    throw new Error(`Unable to find user '${targetUser}': ${e}`)
+                }
+            }
+            targetUser.exp = srcUser.exp;
+            targetUser.gold = srcUser.gold;
+            targetUser.notices = srcUser.notices;
+            targetUser.banned = srcUser.banned;
+            let srcItems = await Promise.all([
+                srcUser.getOwnedItems(),
+                srcUser.getEquippedItems(),
+                srcUser.getOwnedTitles(),
+                srcUser.getEquippedTitle(),
+                targetUser.save(),
+            ]);
 
-                    return Promise.all([
-                        src.getOwnedItems(),
-                        src.getEquippedItems(),
-                        src.getOwnedTitles(),
-                        src.getEquippedTitle(),
-                    ])
-                        .then(srcItems => {
-                            dest.exp = src.exp;
-                            dest.gold = src.gold;
-                            dest.notices = src.notices;
-                            dest.banned = src.banned;
-                            return dest.save().then(dest => Promise.all([
-                                dest.setOwnedItems(srcItems[0]),
-                                dest.setEquippedItems(srcItems[1]),
-                                dest.setOwnedTitles(srcItems[2]),
-                                dest.setEquippedTitle(srcItems[3]),
-                            ])).then(() => User.find({where:{id: dest.id}}));
-                        });
-                });
+            await Promise.all([
+                targetUser.setOwnedItems(srcItems[0]),
+                targetUser.setEquippedItems(srcItems[1]),
+                targetUser.setOwnedTitles(srcItems[2]),
+                targetUser.setEquippedTitle(srcItems[3]),
+            ]);
+            return await User.findByIdentifier(targetUser.id);
         }),
     });
 
     return User;
-};
+}
+;
