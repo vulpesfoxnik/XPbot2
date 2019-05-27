@@ -6,7 +6,7 @@
  * everything went smoothly
  */
 const redis = require("redis");
-const client = redis.createClient(6379, "172.17.0.2");
+const client = redis.createClient(6379, "localhost");
 const db = require('../model');
 const {Op, Promise} = require("sequelize");
 const {scanify} = require("./util");
@@ -164,6 +164,7 @@ crawlResults.count = 0;
 
 const start = performance.now();
 db.authenticate()
+    .then(() => db.sync())
     .then(() => User.count())
     .then(count => count > 0 ? Promise.reject("Database already migrated.") : Promise.resolve())
     .then(() => Promise.all([Item.findAll(), Title.findAll()]))

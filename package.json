@@ -1,5 +1,5 @@
 {
-  "name": "FChatBot-XP-BOT",
+  "name": "fchatbot-xpbot2",
   "version": "1.0.0",
   "private": true,
   "scripts": {
@@ -10,13 +10,17 @@
   "dependencies": {
     "deep-extend": "^0.6.0",
     "fchatlib": "*",
-    "jsonfile": "2.3.*",
-    "redis": "2.8.*",
+    "jsonfile": "^2.3.*",
+    "redis": "^2.8.0",
     "sequelize": "^4.37.10",
     "sqlite3": "^4.0.1",
-    "winston": "^3.0.0"
+    "winston": "^3.0.0",
+    "bluebird": "^3.5.1"
   },
   "devDependencies": {
-    "faker": "^4.1.0"
+    "faker": "^4.1.0",
+    "mocha": "^5.2.0",
+    "sequelize-mock": "^0.10.2",
+    "should": "^13.2.3"
   }
 }
