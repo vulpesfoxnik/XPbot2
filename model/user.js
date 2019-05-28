@@ -118,18 +118,18 @@ module.exports = function (sequelize, DataTypes) {
             return await user.save();
         }),
         unbanByCharacter: constant(async character => {
-            let user = User.find({where: {characterScan: scanify(character)}, rejectOnEmpty: true})
+            let user = User.find({where: {characterScan: scanify(character)}, rejectOnEmpty: true});
             user.banned = false;
             return user.save();
         }),
         exists: constant(async character => {
             return await User.count({where: {characterScan: scanify(character)}}) > 0;
         }),
-        findByIdentifier: constant(async id => {
-            return await User.findById(id, {rejectOnEmpty: true})
+        findUserById: constant(async id => {
+            return await User.scope("allData").findById(id, {rejectOnEmpty: false})
         }),
-        findByName: constant(async id => {
-            return await User.find({where: {characterScan: scanify(id)}, rejectOnEmpty: true});
+        findByCharacter: constant(async id => {
+            return await User.scope("allData").find({where: {characterScan: scanify(id)}, rejectOnEmpty: false});
         }),
         pagination: constant(async function (pageNumber, perPage = 10) {
             pageNumber = Number(pageNumber) <= 0 ? 1 : Number(pageNumber);
@@ -156,9 +156,8 @@ module.exports = function (sequelize, DataTypes) {
             /** @type {User} src */
             let srcUser = this;
             if (!(targetUser instanceof User)) {
-                try {
-                    targetUser = await User.findByName(String(target));
-                } catch (e) {
+                targetUser = await User.findByName(String(target));
+                if (!targetUser) {
                     throw new Error(`Unable to find user '${targetUser}': ${e}`)
                 }
             }
